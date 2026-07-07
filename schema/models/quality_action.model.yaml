@@ -1,0 +1,74 @@
+# =============================================================================
+# Domain: Quality
+# Entity: QualityAction (CAPA)
+# Description: A corrective or preventive action taken to resolve a NonConformance, optionally enacting a
+# QualityProcedure. A NonConformance closes only once its actions are completed. Posts NO GL.
+# =============================================================================
+
+models:
+  - name: QualityAction
+    collection: quality_actions
+    description: "A corrective/preventive action (CAPA) resolving a non-conformance"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique action id"
+      company_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "Org owner # logical FK to organization.Company.id"
+      non_conformance_id:
+        type: uuid
+        attributes: ["@required", "@foreign_key(NonConformance.id)"]
+        description: "The NC this action resolves"
+      action_type:
+        type: QualityActionType
+        attributes: ["@required", "@default(corrective)"]
+        description: "corrective (fix this) or preventive (stop recurrence)"
+      procedure_id:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "The procedure enacted (optional) # logical FK to QualityProcedure.id"
+      status:
+        type: QualityActionStatus
+        attributes: ["@required", "@default(open)"]
+        description: "open → in_progress → completed"
+      description:
+        type: string
+        attributes: ["@required", "@max(2000)"]
+        description: "What will be done"
+      due_date:
+        type: datetime?
+        description: "When it is due"
+      completed_at:
+        type: datetime?
+        description: "When it was completed"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      - type: index
+        fields: [non_conformance_id, status]
+
+enums:
+  - name: QualityActionType
+    description: "CAPA kind"
+    variants:
+      - name: corrective
+        description: "Fix the specific failure"
+        default: true
+      - name: preventive
+        description: "Prevent recurrence"
+
+  - name: QualityActionStatus
+    description: "Action lifecycle"
+    variants:
+      - name: open
+        description: "Planned"
+        default: true
+      - name: in_progress
+        description: "Under way"
+      - name: completed
+        description: "Done"

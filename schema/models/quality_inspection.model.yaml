@@ -1,0 +1,154 @@
+# =============================================================================
+# Domain: Quality
+# Entities: QualityInspection (+ QualityInspectionReading)
+# Description: An inspection of an item against a template. Each reading snapshots its parameter's
+# criterion and records the actual value; a reading is accepted iff it meets the criterion (numeric: in
+# [min,max]; non-numeric: a manual pass). The inspection is ACCEPTED iff every reading is accepted, else
+# REJECTED. It holds a logical link to the Stock document that triggered it (`source_type`/`source_id`,
+# e.g. a purchase receipt) and reads the item — it never imports Stock. The accept/reject verdict is
+# published as an EVENT stock subscribes to (brief §5.3). Posts NO GL.
+# =============================================================================
+
+models:
+  - name: QualityInspection
+    collection: quality_inspections
+    description: "An item inspected against a template; ACCEPTED iff every reading meets its criterion"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique inspection id"
+      company_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "Org owner # logical FK to organization.Company.id"
+      template_id:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "The template inspected against # logical FK to QualityInspectionTemplate.id"
+      item_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "Item inspected # logical FK to catalog.Product.id"
+      inspection_type:
+        type: InspectionType
+        attributes: ["@required", "@default(incoming)"]
+        description: "incoming (on receipt) / in_process / outgoing"
+      source_type:
+        type: string?
+        attributes: ["@max(60)"]
+        description: "The triggering Stock document kind (e.g. 'purchase_receipt') — logical ref"
+      source_id:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "The triggering Stock document id # logical FK (no DB constraint)"
+      sample_size:
+        type: integer
+        attributes: ["@default(1)", "@non_negative"]
+        description: "How many units were sampled"
+      inspected_at:
+        type: datetime
+        attributes: ["@required"]
+        description: "When the inspection was performed"
+      status:
+        type: InspectionStatus
+        attributes: ["@required", "@default(pending)"]
+        description: "pending → accepted / rejected (the disposition verdict)"
+      remarks:
+        type: string?
+        attributes: ["@max(2000)"]
+        description: "Inspector notes"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      - type: index
+        fields: [company_id, status]
+      - type: index
+        fields: [item_id]
+      - type: index
+        fields: [source_type, source_id]
+
+  - name: QualityInspectionReading
+    collection: quality_inspection_readings
+    description: "One measured parameter on an inspection, judged against its snapshotted criterion"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique reading id"
+      inspection_id:
+        type: uuid
+        attributes: ["@required", "@foreign_key(QualityInspection.id)"]
+        description: "Parent inspection"
+      parameter_name:
+        type: string
+        attributes: ["@required", "@max(140)"]
+        description: "The parameter measured"
+      numeric:
+        type: boolean
+        attributes: ["@default(true)"]
+        description: "Snapshot: numeric range check vs manual pass/fail"
+      reading_value:
+        type: decimal?
+        attributes: ["@precision(18,4)"]
+        description: "The measured value (numeric parameter)"
+      min_value:
+        type: decimal?
+        attributes: ["@precision(18,4)"]
+        description: "Snapshotted lower bound"
+      max_value:
+        type: decimal?
+        attributes: ["@precision(18,4)"]
+        description: "Snapshotted upper bound"
+      manual_result:
+        type: boolean?
+        description: "The inspector's pass/fail (non-numeric parameter)"
+      result:
+        type: ReadingResult
+        attributes: ["@required", "@default(accepted)"]
+        description: "accepted iff the reading meets its criterion"
+      remarks:
+        type: string?
+        attributes: ["@max(280)"]
+        description: "Reading notes"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      - type: index
+        fields: [inspection_id]
+
+enums:
+  - name: InspectionType
+    description: "When in the flow the inspection happens"
+    variants:
+      - name: incoming
+        description: "On receipt of purchased goods"
+        default: true
+      - name: in_process
+        description: "During manufacturing"
+      - name: outgoing
+        description: "Before delivery to the customer"
+
+  - name: InspectionStatus
+    description: "The inspection disposition"
+    variants:
+      - name: pending
+        description: "Not yet judged"
+        default: true
+      - name: accepted
+        description: "Every reading met its criterion"
+      - name: rejected
+        description: "At least one reading failed"
+
+  - name: ReadingResult
+    description: "A single reading's verdict"
+    variants:
+      - name: accepted
+        description: "Met the criterion"
+        default: true
+      - name: rejected
+        description: "Out of spec"

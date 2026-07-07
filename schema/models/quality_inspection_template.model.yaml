@@ -1,0 +1,83 @@
+# =============================================================================
+# Domain: Quality
+# Entities: QualityInspectionTemplate (+ QualityInspectionParameter)
+# Description: The acceptance-criteria master. A template names the parameters to check for an item and,
+# per parameter, the criterion: a numeric [min,max] range or a free-text spec. An inspection snapshots
+# each parameter's criterion onto its reading at inspect time, so a later template edit never rewrites a
+# completed inspection. Posts NO GL.
+# =============================================================================
+
+models:
+  - name: QualityInspectionTemplate
+    collection: quality_inspection_templates
+    description: "The parameters + acceptance criteria to inspect an item against"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique template id"
+      company_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "Org owner # logical FK to organization.Company.id"
+      template_name:
+        type: string
+        attributes: ["@required", "@max(140)"]
+        description: "Template name"
+      item_id:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "Item this template inspects (optional; NULL = generic) # logical FK to catalog.Product.id"
+      is_active:
+        type: boolean
+        attributes: ["@default(true)"]
+        description: "Whether new inspections can use this template"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      - type: index
+        fields: [company_id, is_active]
+      - type: index
+        fields: [item_id]
+
+  - name: QualityInspectionParameter
+    collection: quality_inspection_parameters
+    description: "One parameter + its acceptance criterion (numeric range or text spec) in a template"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique parameter id"
+      template_id:
+        type: uuid
+        attributes: ["@required", "@foreign_key(QualityInspectionTemplate.id)"]
+        description: "Parent template"
+      parameter_name:
+        type: string
+        attributes: ["@required", "@max(140)"]
+        description: "What is measured (e.g. 'Diameter (mm)', 'Color')"
+      numeric:
+        type: boolean
+        attributes: ["@default(true)"]
+        description: "True → judged by the [min,max] range; false → manual pass/fail against the spec"
+      min_value:
+        type: decimal?
+        attributes: ["@precision(18,4)"]
+        description: "Lower acceptance bound (inclusive), for a numeric parameter"
+      max_value:
+        type: decimal?
+        attributes: ["@precision(18,4)"]
+        description: "Upper acceptance bound (inclusive), for a numeric parameter"
+      spec_text:
+        type: string?
+        attributes: ["@max(280)"]
+        description: "The acceptance spec, for a non-numeric parameter"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      - type: index
+        fields: [template_id]

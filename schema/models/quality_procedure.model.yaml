@@ -1,0 +1,46 @@
+# =============================================================================
+# Domain: Quality
+# Entity: QualityProcedure
+# Description: A documented quality procedure, arranged as a lightweight adjacency-list tree
+# (`parent_procedure_id`, per brief §6.4 — not a Frappe nested-set). A CAPA (QualityAction) references
+# the procedure it enacts. Posts NO GL.
+# =============================================================================
+
+models:
+  - name: QualityProcedure
+    collection: quality_procedures
+    description: "A documented procedure (adjacency-list tree)"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique procedure id"
+      company_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "Org owner # logical FK to organization.Company.id"
+      procedure_name:
+        type: string
+        attributes: ["@required", "@max(200)"]
+        description: "Procedure name"
+      parent_procedure_id:
+        type: uuid?
+        attributes: ["@foreign_key(QualityProcedure.id)"]
+        description: "Parent procedure (tree); NULL for a top-level procedure"
+      description:
+        type: string?
+        attributes: ["@max(4000)"]
+        description: "Procedure detail"
+      is_active:
+        type: boolean
+        attributes: ["@default(true)"]
+        description: "Whether the procedure is current"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      - type: index
+        fields: [company_id, is_active]
+      - type: index
+        fields: [parent_procedure_id]
