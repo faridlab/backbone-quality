@@ -12,12 +12,19 @@ use std::sync::Arc;
 // Import handlers
 use crate::presentation::http::{
     create_non_conformance_routes,
+    create_non_conformance_read_routes,
     create_quality_action_routes,
+    create_quality_action_read_routes,
     create_quality_inspection_routes,
+    create_quality_inspection_read_routes,
     create_quality_inspection_reading_routes,
+    create_quality_inspection_reading_read_routes,
     create_quality_inspection_template_routes,
+    create_quality_inspection_template_read_routes,
     create_quality_inspection_parameter_routes,
-    create_quality_procedure_routes
+    create_quality_inspection_parameter_read_routes,
+    create_quality_procedure_routes,
+    create_quality_procedure_read_routes
 };
 
 // Import AppState for stateful routes
@@ -48,6 +55,22 @@ pub fn create_stateless_routes(module: &crate::QualityModule) -> Router<()> {
         .merge(create_quality_inspection_template_routes(module.quality_inspection_template_service.clone()))
         .merge(create_quality_inspection_parameter_routes(module.quality_inspection_parameter_service.clone()))
         .merge(create_quality_procedure_routes(module.quality_procedure_service.clone()))
+}
+
+/// Read-only routes for the Quality module — every entity mounted READ-ONLY (the guarded base).
+///
+/// The generic `create_stateless_routes` exposes full mutable CRUD with no domain
+/// validation; this exposes only reads, so generic mutation can't bypass a write
+/// service's invariants. Extend it: `create_readonly_quality_routes(m).merge(my_validated_writes)`.
+pub fn create_readonly_quality_routes(module: &crate::QualityModule) -> Router<()> {
+    Router::new()
+        .merge(create_non_conformance_read_routes(module.non_conformance_service.clone()))
+        .merge(create_quality_action_read_routes(module.quality_action_service.clone()))
+        .merge(create_quality_inspection_read_routes(module.quality_inspection_service.clone()))
+        .merge(create_quality_inspection_reading_read_routes(module.quality_inspection_reading_service.clone()))
+        .merge(create_quality_inspection_template_read_routes(module.quality_inspection_template_service.clone()))
+        .merge(create_quality_inspection_parameter_read_routes(module.quality_inspection_parameter_service.clone()))
+        .merge(create_quality_procedure_read_routes(module.quality_procedure_service.clone()))
 }
 
 /// Get all routes (stateless) for the Quality module.
