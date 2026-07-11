@@ -273,12 +273,23 @@ impl QualityWriteService {
             .execute(&mut *tx)
             .await?;
         }
-        tx.commit().await?;
         let accepted = all_accepted;
-        sink.publish(&QualityEvent::QualityInspectionCompleted(QualityInspectionCompleted {
+        let event = QualityEvent::QualityInspectionCompleted(QualityInspectionCompleted {
             inspection_id: id, company_id: i.company_id, item_id: i.item_id,
             inspection_type: i.inspection_type, source_type: i.source_type, source_id: i.source_id, accepted,
-        }));
+        });
+        // Stage the disposition durably in the SAME tx as the inspection (outbox rollout plan, P1): Stock
+        // subscribes to it to accept/reject the lot, so a crash between commit and the in-proc publish must
+        // not drop it. Then commit, then publish in-proc (the fast path; the relay drains the outbox).
+        let record = backbone_outbox::OutboxRecord::new(
+            "QualityInspectionCompleted", "QualityInspection", id.to_string(),
+            serde_json::to_value(&event).map_err(|e| QualityError::Invalid(e.to_string()))?,
+            chrono::Utc::now(),
+        );
+        backbone_outbox::outbox::stage(&mut *tx, "quality", &record)
+            .await.map_err(|e| QualityError::Invalid(format!("outbox stage: {e}")))?;
+        tx.commit().await?;
+        sink.publish(&event);
         Ok(InspectOutcome { inspection_id: id, accepted })
     }
 
