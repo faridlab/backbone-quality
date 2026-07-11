@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS quality.quality_inspection_parameters (
     template_id UUID NOT NULL,
     parameter_name TEXT NOT NULL,
     numeric BOOLEAN NOT NULL DEFAULT TRUE,
-    min_value NUMERIC,
-    max_value NUMERIC,
+    min_value NUMERIC(18, 4),
+    max_value NUMERIC(18, 4),
     spec_text TEXT,
     metadata JSONB NOT NULL DEFAULT '{"created_at":null,"updated_at":null,"deleted_at":null,"created_by":null,"updated_by":null,"deleted_by":null}'::jsonb,
     PRIMARY KEY (id)

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS quality.quality_inspections (
     inspection_type inspection_type NOT NULL DEFAULT 'incoming',
     source_type TEXT,
     source_id UUID,
-    sample_size INTEGER NOT NULL DEFAULT 1,
+    sample_size INTEGER NOT NULL DEFAULT 1 CHECK (sample_size >= 0),
     inspected_at TIMESTAMPTZ NOT NULL,
     status inspection_status NOT NULL DEFAULT 'pending',
     remarks TEXT,
