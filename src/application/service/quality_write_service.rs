@@ -12,8 +12,15 @@
 use backbone_orm::company_scope;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use sqlx::{PgPool, Row};
+use sqlx::PgPool;
 use uuid::Uuid;
+
+use crate::infrastructure::persistence::{
+    NewInspectionRow, NewNonConformanceRow, NewProcedureRow, NewQualityActionRow, NewReadingRow,
+    NewTemplateParameterRow, NewTemplateRow, NonConformanceRepository, QualityActionRepository,
+    QualityInspectionParameterRepository, QualityInspectionReadingRepository,
+    QualityInspectionRepository, QualityInspectionTemplateRepository, QualityProcedureRepository,
+};
 
 use super::quality_events::*;
 
@@ -92,11 +99,28 @@ pub struct InspectOutcome {
 
 pub struct QualityWriteService {
     pool: PgPool,
+    templates: QualityInspectionTemplateRepository,
+    template_parameters: QualityInspectionParameterRepository,
+    procedures: QualityProcedureRepository,
+    inspections: QualityInspectionRepository,
+    readings: QualityInspectionReadingRepository,
+    non_conformances: NonConformanceRepository,
+    actions: QualityActionRepository,
 }
 
 impl QualityWriteService {
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        let templates = QualityInspectionTemplateRepository::new(pool.clone());
+        let template_parameters = QualityInspectionParameterRepository::new(pool.clone());
+        let procedures = QualityProcedureRepository::new(pool.clone());
+        let inspections = QualityInspectionRepository::new(pool.clone());
+        let readings = QualityInspectionReadingRepository::new(pool.clone());
+        let non_conformances = NonConformanceRepository::new(pool.clone());
+        let actions = QualityActionRepository::new(pool.clone());
+        Self {
+            pool, templates, template_parameters, procedures, inspections, readings,
+            non_conformances, actions,
+        }
     }
 
     /// Define an inspection template with its parameters + acceptance criteria. Each numeric parameter
@@ -125,23 +149,22 @@ impl QualityWriteService {
         // RLS scope (ADR-0008): company is on the DTO — bind it explicitly onto this transaction, so the
         // template + parameter inserts pass the `app.company_id` fence.
         company_scope::bind_company_on(&mut tx, t.company_id).await?;
-        sqlx::query(
-            r#"INSERT INTO quality.quality_inspection_templates (id, company_id, template_name, item_id, is_active)
-               VALUES ($1,$2,$3,$4,true)"#,
-        )
-        .bind(id).bind(t.company_id).bind(&t.template_name).bind(t.item_id)
-        .execute(&mut *tx)
-        .await?;
+        self.templates.insert_template(&mut tx, &NewTemplateRow {
+            id,
+            company_id: t.company_id,
+            template_name: &t.template_name,
+            item_id: t.item_id,
+        }).await?;
         for p in &t.parameters {
-            sqlx::query(
-                r#"INSERT INTO quality.quality_inspection_parameters
-                     (id, template_id, parameter_name, numeric, min_value, max_value, spec_text)
-                   VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
-            )
-            .bind(Uuid::new_v4()).bind(id).bind(&p.parameter_name).bind(p.numeric)
-            .bind(p.min_value).bind(p.max_value).bind(&p.spec_text)
-            .execute(&mut *tx)
-            .await?;
+            self.template_parameters.insert_parameter(&mut tx, &NewTemplateParameterRow {
+                id: Uuid::new_v4(),
+                template_id: id,
+                parameter_name: &p.parameter_name,
+                numeric: p.numeric,
+                min_value: p.min_value,
+                max_value: p.max_value,
+                spec_text: p.spec_text.as_deref(),
+            }).await?;
         }
         tx.commit().await?;
         Ok(id)
@@ -157,29 +180,23 @@ impl QualityWriteService {
         if let Some(parent) = p.parent_procedure_id {
             let ok: Option<Uuid> = company_scope::with_company_scope(
                 Some(p.company_id),
-                company_scope::fetch_optional_scalar_scoped(
-                    &self.pool,
-                    sqlx::query_scalar(
-                        "SELECT id FROM quality.quality_procedures WHERE id=$1 AND company_id=$2")
-                        .bind(parent).bind(p.company_id),
-                ),
+                self.procedures.find_id_in_company(&self.pool, parent, p.company_id),
             ).await?;
             if ok.is_none() {
                 return Err(QualityError::Invalid("parent procedure is not in this company".into()));
             }
         }
         let id = Uuid::new_v4();
+        let row = NewProcedureRow {
+            id,
+            company_id: p.company_id,
+            procedure_name: &p.procedure_name,
+            parent_procedure_id: p.parent_procedure_id,
+            description: p.description.as_deref(),
+        };
         company_scope::with_company_scope(
             Some(p.company_id),
-            company_scope::execute_scoped(
-                &self.pool,
-                sqlx::query(
-                    r#"INSERT INTO quality.quality_procedures
-                         (id, company_id, procedure_name, parent_procedure_id, description, is_active)
-                       VALUES ($1,$2,$3,$4,$5,true)"#,
-                )
-                .bind(id).bind(p.company_id).bind(&p.procedure_name).bind(p.parent_procedure_id).bind(&p.description),
-            ),
+            self.procedures.insert_procedure(&self.pool, &row),
         ).await?;
         Ok(id)
     }
@@ -206,14 +223,7 @@ impl QualityWriteService {
         // belonging to another tenant reads as absent (`NotFound`) rather than leaking its criteria.
         let params = company_scope::with_company_scope(
             Some(i.company_id),
-            company_scope::fetch_all_rows_scoped(
-                &self.pool,
-                sqlx::query(
-                    r#"SELECT parameter_name, numeric, min_value, max_value FROM quality.quality_inspection_parameters
-                       WHERE template_id=$1 AND (metadata->>'deleted_at') IS NULL"#,
-                )
-                .bind(i.template_id),
-            ),
+            self.template_parameters.list_criteria(&self.pool, i.template_id),
         ).await?;
         if params.is_empty() {
             return Err(QualityError::NotFound("template"));
@@ -221,7 +231,7 @@ impl QualityWriteService {
         use std::collections::HashMap;
         let mut criteria: HashMap<String, (bool, Option<Decimal>, Option<Decimal>)> = HashMap::new();
         for p in &params {
-            criteria.insert(p.get("parameter_name"), (p.get("numeric"), p.get("min_value"), p.get("max_value")));
+            criteria.insert(p.parameter_name.clone(), (p.numeric, p.min_value, p.max_value));
         }
         // Coverage: exactly one reading per template parameter — no unknown, no duplicate, none missing.
         let mut seen: std::collections::HashSet<&str> = std::collections::HashSet::new();
@@ -275,28 +285,32 @@ impl QualityWriteService {
         // RLS scope (ADR-0008): bind this tx to the inspection's company, so the inspection + readings
         // inserts and the outbox stage all pass the fence.
         company_scope::bind_company_on(&mut tx, i.company_id).await?;
-        sqlx::query(
-            r#"INSERT INTO quality.quality_inspections
-                 (id, company_id, template_id, item_id, inspection_type, source_type, source_id,
-                  sample_size, inspected_at, status, remarks)
-               VALUES ($1,$2,$3,$4,$5::inspection_type,$6,$7,$8,$9,$10::inspection_status,NULL)"#,
-        )
-        .bind(id).bind(i.company_id).bind(i.template_id).bind(i.item_id).bind(&i.inspection_type)
-        .bind(&i.source_type).bind(i.source_id).bind(i.sample_size).bind(now).bind(status)
-        .execute(&mut *tx)
-        .await?;
+        self.inspections.insert_inspection(&mut tx, &NewInspectionRow {
+            id,
+            company_id: i.company_id,
+            template_id: i.template_id,
+            item_id: i.item_id,
+            inspection_type: &i.inspection_type,
+            source_type: i.source_type.as_deref(),
+            source_id: i.source_id,
+            sample_size: i.sample_size,
+            inspected_at: now,
+            status,
+        }).await?;
         for j in &judged {
             let result = if j.accepted { "accepted" } else { "rejected" };
-            sqlx::query(
-                r#"INSERT INTO quality.quality_inspection_readings
-                     (id, inspection_id, parameter_name, numeric, reading_value, min_value, max_value,
-                      manual_result, result, remarks)
-                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::reading_result,$10)"#,
-            )
-            .bind(Uuid::new_v4()).bind(id).bind(&j.parameter_name).bind(j.numeric).bind(j.value)
-            .bind(j.min_value).bind(j.max_value).bind(j.manual_result).bind(result).bind(&j.remarks)
-            .execute(&mut *tx)
-            .await?;
+            self.readings.insert_reading(&mut tx, &NewReadingRow {
+                id: Uuid::new_v4(),
+                inspection_id: id,
+                parameter_name: &j.parameter_name,
+                numeric: j.numeric,
+                reading_value: j.value,
+                min_value: j.min_value,
+                max_value: j.max_value,
+                manual_result: j.manual_result,
+                result,
+                remarks: j.remarks.as_deref(),
+            }).await?;
         }
         let accepted = all_accepted;
         let event = QualityEvent::QualityInspectionCompleted(QualityInspectionCompleted {
@@ -334,12 +348,7 @@ impl QualityWriteService {
         if let Some(insp) = nc.source_inspection_id {
             let st: Option<String> = company_scope::with_company_scope(
                 Some(nc.company_id),
-                company_scope::fetch_optional_scalar_scoped(
-                    &self.pool,
-                    sqlx::query_scalar(
-                        "SELECT status::text FROM quality.quality_inspections WHERE id=$1 AND (metadata->>'deleted_at') IS NULL")
-                        .bind(insp),
-                ),
+                self.inspections.find_status(&self.pool, insp),
             ).await?;
             match st.as_deref() {
                 None => return Err(QualityError::NotFound("source inspection")),
@@ -348,18 +357,19 @@ impl QualityWriteService {
             }
         }
         let id = Uuid::new_v4();
+        let row = NewNonConformanceRow {
+            id,
+            company_id: nc.company_id,
+            subject: &nc.subject,
+            source_inspection_id: nc.source_inspection_id,
+            item_id: nc.item_id,
+            severity: &nc.severity,
+            description: nc.description.as_deref(),
+            opened_at: now,
+        };
         company_scope::with_company_scope(
             Some(nc.company_id),
-            company_scope::execute_scoped(
-                &self.pool,
-                sqlx::query(
-                    r#"INSERT INTO quality.non_conformances
-                         (id, company_id, subject, source_inspection_id, item_id, severity, status, description, opened_at)
-                       VALUES ($1,$2,$3,$4,$5,$6::non_conformance_severity,'open'::non_conformance_status,$7,$8)"#,
-                )
-                .bind(id).bind(nc.company_id).bind(&nc.subject).bind(nc.source_inspection_id).bind(nc.item_id)
-                .bind(&nc.severity).bind(&nc.description).bind(now),
-            ),
+            self.non_conformances.insert_non_conformance(&self.pool, &row),
         ).await?;
         sink.publish(&QualityEvent::NonConformanceRaised(NonConformanceRaised {
             non_conformance_id: id, company_id: nc.company_id,
@@ -381,36 +391,22 @@ impl QualityWriteService {
         // `company_auth`), so the locking read below cannot see another tenant's NC. A non-HTTP CALLER
         // (job/event driver) MUST wrap this call in `with_company_scope(Some(company_id))` or it fails closed.
         company_scope::bind_current_company(&mut tx).await?;
-        let st: Option<String> = sqlx::query_scalar(
-            r#"SELECT status::text FROM quality.non_conformances
-               WHERE id=$1 AND (metadata->>'deleted_at') IS NULL FOR UPDATE"#,
-        )
-        .bind(a.non_conformance_id)
-        .fetch_optional(&mut *tx)
-        .await?;
+        let st: Option<String> = self.non_conformances.lock_status(&mut tx, a.non_conformance_id).await?;
         match st.as_deref() {
             None => { tx.rollback().await?; return Err(QualityError::NotFound("non-conformance")); }
             Some("closed") => { tx.rollback().await?; return Err(QualityError::InvalidState("non-conformance is closed")); }
             _ => {}
         }
         let id = Uuid::new_v4();
-        sqlx::query(
-            r#"INSERT INTO quality.quality_actions
-                 (id, company_id, non_conformance_id, action_type, procedure_id, status, description, due_date)
-               VALUES ($1,(SELECT company_id FROM quality.non_conformances WHERE id=$2),
-                       $2,$3::quality_action_type,$4,'open'::quality_action_status,$5,$6)"#,
-        )
-        .bind(id).bind(a.non_conformance_id).bind(&a.action_type).bind(a.procedure_id)
-        .bind(&a.description).bind(a.due_date)
-        .execute(&mut *tx)
-        .await?;
-        sqlx::query(
-            r#"UPDATE quality.non_conformances SET status='in_progress'::non_conformance_status
-               WHERE id=$1 AND status='open'::non_conformance_status"#,
-        )
-        .bind(a.non_conformance_id)
-        .execute(&mut *tx)
-        .await?;
+        self.actions.insert_action(&mut tx, &NewQualityActionRow {
+            id,
+            non_conformance_id: a.non_conformance_id,
+            action_type: &a.action_type,
+            procedure_id: a.procedure_id,
+            description: &a.description,
+            due_date: a.due_date,
+        }).await?;
+        self.non_conformances.mark_in_progress(&mut tx, a.non_conformance_id).await?;
         tx.commit().await?;
         Ok(id)
     }
@@ -421,22 +417,10 @@ impl QualityWriteService {
         // scope from. Both statements ride the REQUEST-dedicated connection, which carries the caller's
         // `app.company_id` — another tenant's action is simply not found. A non-HTTP CALLER must wrap this
         // in `with_company_scope(Some(company_id))`.
-        let moved = company_scope::execute_scoped(
-            &self.pool,
-            sqlx::query(
-                r#"UPDATE quality.quality_actions
-                   SET status='completed'::quality_action_status, completed_at=$2
-                   WHERE id=$1 AND status <> 'completed'::quality_action_status AND (metadata->>'deleted_at') IS NULL"#,
-            )
-            .bind(action_id).bind(now),
-        ).await?;
-        if moved.rows_affected() == 0 {
+        let moved = self.actions.complete(&self.pool, action_id, now).await?;
+        if moved == 0 {
             // Either already completed (idempotent no-op) or not found.
-            let exists: Option<Uuid> = company_scope::fetch_optional_scalar_scoped(
-                &self.pool,
-                sqlx::query_scalar(
-                    "SELECT id FROM quality.quality_actions WHERE id=$1").bind(action_id),
-            ).await?;
+            let exists: Option<Uuid> = self.actions.exists(&self.pool, action_id).await?;
             if exists.is_none() {
                 return Err(QualityError::NotFound("action"));
             }
@@ -459,41 +443,22 @@ impl QualityWriteService {
         // (the caller's company under HTTP) so that read is fenced; a non-HTTP CALLER MUST wrap this call
         // in `with_company_scope(Some(company_id))` or it fails closed.
         company_scope::bind_current_company(&mut tx).await?;
-        let row = sqlx::query(
-            r#"SELECT company_id, status::text AS status FROM quality.non_conformances
-               WHERE id=$1 AND (metadata->>'deleted_at') IS NULL FOR UPDATE"#,
-        )
-        .bind(nc_id)
-        .fetch_optional(&mut *tx)
-        .await?;
+        let row = self.non_conformances.lock_for_close(&mut tx, nc_id).await?;
         let row = match row {
             Some(r) => r,
             None => { tx.rollback().await?; return Err(QualityError::NotFound("non-conformance")); }
         };
-        let status: String = row.get("status");
-        if status == "closed" {
+        if row.status == "closed" {
             tx.rollback().await?;
             return Ok(()); // idempotent
         }
-        let open_actions: i64 = sqlx::query_scalar(
-            r#"SELECT count(*) FROM quality.quality_actions
-               WHERE non_conformance_id=$1 AND status <> 'completed'::quality_action_status"#,
-        )
-        .bind(nc_id)
-        .fetch_one(&mut *tx)
-        .await?;
+        let open_actions: i64 = self.actions.count_incomplete(&mut tx, nc_id).await?;
         if open_actions > 0 {
             tx.rollback().await?;
             return Err(QualityError::InvalidState("cannot close — incomplete actions remain"));
         }
-        let company_id: Uuid = row.get("company_id");
-        sqlx::query(
-            r#"UPDATE quality.non_conformances SET status='closed'::non_conformance_status, closed_at=$2
-               WHERE id=$1"#,
-        )
-        .bind(nc_id).bind(now)
-        .execute(&mut *tx)
-        .await?;
+        let company_id: Uuid = row.company_id;
+        self.non_conformances.close(&mut tx, nc_id, now).await?;
         tx.commit().await?;
         sink.publish(&QualityEvent::NonConformanceClosed(NonConformanceClosed { non_conformance_id: nc_id, company_id }));
         Ok(())

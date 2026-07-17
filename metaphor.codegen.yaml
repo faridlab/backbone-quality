@@ -13,6 +13,17 @@
 user_owned:
   - "src/application/service/quality_events.rs"
   - "src/application/service/quality_write_service.rs"
+  # Own the hand-written quality SQL (the template + criteria definition, the inspection verdict's
+  # header/readings inserts, the CAPA lifecycle's locked reads and gated transitions) that the write
+  # service orchestrates. Declared here — not renamed with a `_custom` suffix — so the generator skips
+  # them wholesale; this declaration is what makes editing them legitimate.
+  - "src/infrastructure/persistence/non_conformance_repository.rs"
+  - "src/infrastructure/persistence/quality_action_repository.rs"
+  - "src/infrastructure/persistence/quality_inspection_parameter_repository.rs"
+  - "src/infrastructure/persistence/quality_inspection_reading_repository.rs"
+  - "src/infrastructure/persistence/quality_inspection_repository.rs"
+  - "src/infrastructure/persistence/quality_inspection_template_repository.rs"
+  - "src/infrastructure/persistence/quality_procedure_repository.rs"
   - "tests/integrity_probes.rs"
   - "tests/quality_golden_cases.rs"
   - "tests/quality_inspection_seam.rs"
