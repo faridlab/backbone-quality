@@ -9,6 +9,7 @@
 //!
 //! Verdict/lifecycle timestamps are passed in (`now`) so the logic is deterministic under test.
 
+use backbone_orm::company_scope;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
@@ -121,6 +122,9 @@ impl QualityWriteService {
         }
         let id = Uuid::new_v4();
         let mut tx = self.pool.begin().await?;
+        // RLS scope (ADR-0008): company is on the DTO — bind it explicitly onto this transaction, so the
+        // template + parameter inserts pass the `app.company_id` fence.
+        company_scope::bind_company_on(&mut tx, t.company_id).await?;
         sqlx::query(
             r#"INSERT INTO quality.quality_inspection_templates (id, company_id, template_name, item_id, is_active)
                VALUES ($1,$2,$3,$4,true)"#,
@@ -148,23 +152,35 @@ impl QualityWriteService {
         if p.procedure_name.trim().is_empty() {
             return Err(QualityError::Invalid("procedure needs a name".into()));
         }
+        // RLS scope (ADR-0008): company is on the DTO — scope each query to it. The explicit
+        // `company_id = $2` filter below stays as defense-in-depth.
         if let Some(parent) = p.parent_procedure_id {
-            let ok: Option<Uuid> = sqlx::query_scalar(
-                "SELECT id FROM quality.quality_procedures WHERE id=$1 AND company_id=$2")
-                .bind(parent).bind(p.company_id).fetch_optional(&self.pool).await?;
+            let ok: Option<Uuid> = company_scope::with_company_scope(
+                Some(p.company_id),
+                company_scope::fetch_optional_scalar_scoped(
+                    &self.pool,
+                    sqlx::query_scalar(
+                        "SELECT id FROM quality.quality_procedures WHERE id=$1 AND company_id=$2")
+                        .bind(parent).bind(p.company_id),
+                ),
+            ).await?;
             if ok.is_none() {
                 return Err(QualityError::Invalid("parent procedure is not in this company".into()));
             }
         }
         let id = Uuid::new_v4();
-        sqlx::query(
-            r#"INSERT INTO quality.quality_procedures
-                 (id, company_id, procedure_name, parent_procedure_id, description, is_active)
-               VALUES ($1,$2,$3,$4,$5,true)"#,
-        )
-        .bind(id).bind(p.company_id).bind(&p.procedure_name).bind(p.parent_procedure_id).bind(&p.description)
-        .execute(&self.pool)
-        .await?;
+        company_scope::with_company_scope(
+            Some(p.company_id),
+            company_scope::execute_scoped(
+                &self.pool,
+                sqlx::query(
+                    r#"INSERT INTO quality.quality_procedures
+                         (id, company_id, procedure_name, parent_procedure_id, description, is_active)
+                       VALUES ($1,$2,$3,$4,$5,true)"#,
+                )
+                .bind(id).bind(p.company_id).bind(&p.procedure_name).bind(p.parent_procedure_id).bind(&p.description),
+            ),
+        ).await?;
         Ok(id)
     }
 
@@ -186,13 +202,19 @@ impl QualityWriteService {
         // TEMPLATE — so every template parameter must be measured exactly once. Judging only the
         // caller-supplied readings would let a truncated readings set (dropping the parameter that would
         // fail) or a concurrently-added parameter pass unmeasured (maturity council 2026-07-07).
-        let params = sqlx::query(
-            r#"SELECT parameter_name, numeric, min_value, max_value FROM quality.quality_inspection_parameters
-               WHERE template_id=$1 AND (metadata->>'deleted_at') IS NULL"#,
-        )
-        .bind(i.template_id)
-        .fetch_all(&self.pool)
-        .await?;
+        // RLS scope (ADR-0008): company is on the DTO — scope the criteria snapshot to it, so a template
+        // belonging to another tenant reads as absent (`NotFound`) rather than leaking its criteria.
+        let params = company_scope::with_company_scope(
+            Some(i.company_id),
+            company_scope::fetch_all_rows_scoped(
+                &self.pool,
+                sqlx::query(
+                    r#"SELECT parameter_name, numeric, min_value, max_value FROM quality.quality_inspection_parameters
+                       WHERE template_id=$1 AND (metadata->>'deleted_at') IS NULL"#,
+                )
+                .bind(i.template_id),
+            ),
+        ).await?;
         if params.is_empty() {
             return Err(QualityError::NotFound("template"));
         }
@@ -250,6 +272,9 @@ impl QualityWriteService {
 
         let id = Uuid::new_v4();
         let mut tx = self.pool.begin().await?;
+        // RLS scope (ADR-0008): bind this tx to the inspection's company, so the inspection + readings
+        // inserts and the outbox stage all pass the fence.
+        company_scope::bind_company_on(&mut tx, i.company_id).await?;
         sqlx::query(
             r#"INSERT INTO quality.quality_inspections
                  (id, company_id, template_id, item_id, inspection_type, source_type, source_id,
@@ -304,10 +329,18 @@ impl QualityWriteService {
         if nc.subject.trim().is_empty() {
             return Err(QualityError::Invalid("non-conformance needs a subject".into()));
         }
+        // RLS scope (ADR-0008): company is on the DTO — scope both the source-inspection check and the
+        // insert to it. The cited inspection must be visible in THIS company or it reads as not found.
         if let Some(insp) = nc.source_inspection_id {
-            let st: Option<String> = sqlx::query_scalar(
-                "SELECT status::text FROM quality.quality_inspections WHERE id=$1 AND (metadata->>'deleted_at') IS NULL")
-                .bind(insp).fetch_optional(&self.pool).await?;
+            let st: Option<String> = company_scope::with_company_scope(
+                Some(nc.company_id),
+                company_scope::fetch_optional_scalar_scoped(
+                    &self.pool,
+                    sqlx::query_scalar(
+                        "SELECT status::text FROM quality.quality_inspections WHERE id=$1 AND (metadata->>'deleted_at') IS NULL")
+                        .bind(insp),
+                ),
+            ).await?;
             match st.as_deref() {
                 None => return Err(QualityError::NotFound("source inspection")),
                 Some("rejected") => {}
@@ -315,15 +348,19 @@ impl QualityWriteService {
             }
         }
         let id = Uuid::new_v4();
-        sqlx::query(
-            r#"INSERT INTO quality.non_conformances
-                 (id, company_id, subject, source_inspection_id, item_id, severity, status, description, opened_at)
-               VALUES ($1,$2,$3,$4,$5,$6::non_conformance_severity,'open'::non_conformance_status,$7,$8)"#,
-        )
-        .bind(id).bind(nc.company_id).bind(&nc.subject).bind(nc.source_inspection_id).bind(nc.item_id)
-        .bind(&nc.severity).bind(&nc.description).bind(now)
-        .execute(&self.pool)
-        .await?;
+        company_scope::with_company_scope(
+            Some(nc.company_id),
+            company_scope::execute_scoped(
+                &self.pool,
+                sqlx::query(
+                    r#"INSERT INTO quality.non_conformances
+                         (id, company_id, subject, source_inspection_id, item_id, severity, status, description, opened_at)
+                       VALUES ($1,$2,$3,$4,$5,$6::non_conformance_severity,'open'::non_conformance_status,$7,$8)"#,
+                )
+                .bind(id).bind(nc.company_id).bind(&nc.subject).bind(nc.source_inspection_id).bind(nc.item_id)
+                .bind(&nc.severity).bind(&nc.description).bind(now),
+            ),
+        ).await?;
         sink.publish(&QualityEvent::NonConformanceRaised(NonConformanceRaised {
             non_conformance_id: id, company_id: nc.company_id,
             source_inspection_id: nc.source_inspection_id, severity: nc.severity,
@@ -338,6 +375,12 @@ impl QualityWriteService {
             return Err(QualityError::Invalid("action needs a description".into()));
         }
         let mut tx = self.pool.begin().await?;
+        // RLS scope (ADR-0008), ID-only pattern: this method carries NO company — it is identified by the
+        // non-conformance id alone, and the action's company is derived by sub-SELECT from the NC row. So
+        // bind the AMBIENT task-local scope onto the tx: under HTTP that is the caller's company (set by
+        // `company_auth`), so the locking read below cannot see another tenant's NC. A non-HTTP CALLER
+        // (job/event driver) MUST wrap this call in `with_company_scope(Some(company_id))` or it fails closed.
+        company_scope::bind_current_company(&mut tx).await?;
         let st: Option<String> = sqlx::query_scalar(
             r#"SELECT status::text FROM quality.non_conformances
                WHERE id=$1 AND (metadata->>'deleted_at') IS NULL FOR UPDATE"#,
@@ -374,18 +417,26 @@ impl QualityWriteService {
 
     /// Mark an action completed (terminal). Idempotent — a re-complete is a no-op.
     pub async fn complete_action(&self, action_id: Uuid, now: DateTime<Utc>) -> Result<(), QualityError> {
-        let moved = sqlx::query(
-            r#"UPDATE quality.quality_actions
-               SET status='completed'::quality_action_status, completed_at=$2
-               WHERE id=$1 AND status <> 'completed'::quality_action_status AND (metadata->>'deleted_at') IS NULL"#,
-        )
-        .bind(action_id).bind(now)
-        .execute(&self.pool)
-        .await?;
+        // RLS scope (ADR-0008), ID-only pattern: identified by the action id alone, with no company to
+        // scope from. Both statements ride the REQUEST-dedicated connection, which carries the caller's
+        // `app.company_id` — another tenant's action is simply not found. A non-HTTP CALLER must wrap this
+        // in `with_company_scope(Some(company_id))`.
+        let moved = company_scope::execute_scoped(
+            &self.pool,
+            sqlx::query(
+                r#"UPDATE quality.quality_actions
+                   SET status='completed'::quality_action_status, completed_at=$2
+                   WHERE id=$1 AND status <> 'completed'::quality_action_status AND (metadata->>'deleted_at') IS NULL"#,
+            )
+            .bind(action_id).bind(now),
+        ).await?;
         if moved.rows_affected() == 0 {
             // Either already completed (idempotent no-op) or not found.
-            let exists: Option<Uuid> = sqlx::query_scalar(
-                "SELECT id FROM quality.quality_actions WHERE id=$1").bind(action_id).fetch_optional(&self.pool).await?;
+            let exists: Option<Uuid> = company_scope::fetch_optional_scalar_scoped(
+                &self.pool,
+                sqlx::query_scalar(
+                    "SELECT id FROM quality.quality_actions WHERE id=$1").bind(action_id),
+            ).await?;
             if exists.is_none() {
                 return Err(QualityError::NotFound("action"));
             }
@@ -403,6 +454,11 @@ impl QualityWriteService {
         sink: &dyn QualityEventSink,
     ) -> Result<(), QualityError> {
         let mut tx = self.pool.begin().await?;
+        // RLS scope (ADR-0008), ID-only pattern: identified by the NC id alone — the company is only known
+        // AFTER the locking read below, so it cannot be bound up front. Bind the AMBIENT task-local scope
+        // (the caller's company under HTTP) so that read is fenced; a non-HTTP CALLER MUST wrap this call
+        // in `with_company_scope(Some(company_id))` or it fails closed.
+        company_scope::bind_current_company(&mut tx).await?;
         let row = sqlx::query(
             r#"SELECT company_id, status::text AS status FROM quality.non_conformances
                WHERE id=$1 AND (metadata->>'deleted_at') IS NULL FOR UPDATE"#,
