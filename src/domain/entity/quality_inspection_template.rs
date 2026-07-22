@@ -217,6 +217,9 @@ impl backbone_orm::EntityRepoMeta for QualityInspectionTemplate {
     fn search_fields() -> &'static [&'static str] {
         &["template_name"]
     }
+    fn company_field() -> Option<&'static str> {
+        Some("company_id")
+    }
 }
 
 /// Builder for QualityInspectionTemplate entity

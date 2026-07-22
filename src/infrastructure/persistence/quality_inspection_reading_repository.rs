@@ -45,6 +45,7 @@ impl QualityInspectionReadingRepository {
 /// per-reading judgement, cast at the DB (`$9::reading_result`) — the SQL does not re-judge it.
 pub struct NewReadingRow<'a> {
     pub id: Uuid,
+    pub company_id: Uuid,
     pub inspection_id: Uuid,
     pub parameter_name: &'a str,
     pub numeric: bool,
@@ -60,7 +61,10 @@ pub struct NewReadingRow<'a> {
 /// 4-layer rule.
 impl QualityInspectionReadingRepository {
     /// Insert one judged reading. Takes the CALLER'S connection so it commits with the inspection header
-    /// it belongs to. The caller has already bound the company — don't re-bind here.
+    /// it belongs to. The caller has already bound the company on this connection — don't re-bind here.
+    /// `company_id` is the DENORMALIZED owner (ADR-0010 Decision A): copied from the inspection header
+    /// by the write path so the FORALL RLS fence applies without a parent-join. The WITH CHECK policy
+    /// verifies it matches the ambient `app.company_id` (which the caller has bound).
     pub async fn insert_reading(
         &self,
         conn: &mut sqlx::PgConnection,
@@ -68,12 +72,13 @@ impl QualityInspectionReadingRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO quality.quality_inspection_readings
-                 (id, inspection_id, parameter_name, numeric, reading_value, min_value, max_value,
-                  manual_result, result, remarks)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::reading_result,$10)"#,
+                 (id, company_id, inspection_id, parameter_name, numeric, reading_value, min_value,
+                  max_value, manual_result, result, remarks)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::reading_result,$11)"#,
         )
-        .bind(r.id).bind(r.inspection_id).bind(r.parameter_name).bind(r.numeric).bind(r.reading_value)
-        .bind(r.min_value).bind(r.max_value).bind(r.manual_result).bind(r.result).bind(r.remarks)
+        .bind(r.id).bind(r.company_id).bind(r.inspection_id).bind(r.parameter_name).bind(r.numeric)
+        .bind(r.reading_value).bind(r.min_value).bind(r.max_value).bind(r.manual_result)
+        .bind(r.result).bind(r.remarks)
         .execute(conn)
         .await?;
         Ok(())

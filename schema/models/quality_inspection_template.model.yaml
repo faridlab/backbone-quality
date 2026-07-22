@@ -50,6 +50,10 @@ models:
         type: uuid
         attributes: ["@id", "@default(uuid)"]
         description: "Unique parameter id"
+      company_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "Org owner # logical FK to organization.Company.id — DENORMALIZED from the parent template (ADR-0010 Decision A). Kept in sync by the write path (create_template copies it off the template header); the FORALL RLS policy fences reads/writes without a parent-join."
       template_id:
         type: uuid
         attributes: ["@required", "@foreign_key(QualityInspectionTemplate.id)"]

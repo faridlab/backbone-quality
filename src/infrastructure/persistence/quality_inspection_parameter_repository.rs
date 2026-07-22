@@ -45,6 +45,7 @@ impl QualityInspectionParameterRepository {
 /// Mirrors the raw column shape rather than the `QualityInspectionParameter` entity.
 pub struct NewTemplateParameterRow<'a> {
     pub id: Uuid,
+    pub company_id: Uuid,
     pub template_id: Uuid,
     pub parameter_name: &'a str,
     pub numeric: bool,
@@ -65,7 +66,11 @@ pub struct CriterionRow {
 /// 4-layer rule.
 impl QualityInspectionParameterRepository {
     /// Insert one parameter + its criterion. Takes the CALLER'S connection so it commits with the
-    /// template header it belongs to. The caller has already bound the company — don't re-bind here.
+    /// template header it belongs to. The caller has already bound the company on this connection —
+    /// don't re-bind here. `company_id` is the DENORMALIZED owner (ADR-0010 Decision A): copied from
+    /// the template header by the write path so the FORALL RLS fence applies without a parent-join.
+    /// The WITH CHECK policy verifies it matches the ambient `app.company_id` (which the caller has
+    /// bound).
     pub async fn insert_parameter(
         &self,
         conn: &mut sqlx::PgConnection,
@@ -73,10 +78,10 @@ impl QualityInspectionParameterRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO quality.quality_inspection_parameters
-                 (id, template_id, parameter_name, numeric, min_value, max_value, spec_text)
-               VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+                 (id, company_id, template_id, parameter_name, numeric, min_value, max_value, spec_text)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
         )
-        .bind(p.id).bind(p.template_id).bind(p.parameter_name).bind(p.numeric)
+        .bind(p.id).bind(p.company_id).bind(p.template_id).bind(p.parameter_name).bind(p.numeric)
         .bind(p.min_value).bind(p.max_value).bind(p.spec_text)
         .execute(conn)
         .await?;

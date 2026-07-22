@@ -3158,6 +3158,7 @@ components:
       type: object
       required:
         - id
+        - company_id
         - inspection_id
         - parameter_name
         - numeric
@@ -3165,6 +3166,9 @@ components:
         - metadata
       properties:
         id:
+          type: string
+          format: uuid
+        company_id:
           type: string
           format: uuid
         inspection_id:
@@ -3212,12 +3216,16 @@ components:
     CreateQualityInspectionReadingRequest:
       type: object
       required:
+        - company_id
         - inspection_id
         - parameter_name
         - numeric
         - result
         - metadata
       properties:
+        company_id:
+          type: string
+          format: uuid
         inspection_id:
           type: string
           format: uuid
@@ -3250,12 +3258,16 @@ components:
     UpdateQualityInspectionReadingRequest:
       type: object
       required:
+        - company_id
         - inspection_id
         - parameter_name
         - numeric
         - result
         - metadata
       properties:
+        company_id:
+          type: string
+          format: uuid
         inspection_id:
           type: string
           format: uuid
@@ -3288,6 +3300,9 @@ components:
     PatchQualityInspectionReadingRequest:
       type: object
       properties:
+        company_id:
+          type: string
+          format: uuid
         inspection_id:
           type: string
           format: uuid
@@ -3445,12 +3460,16 @@ components:
       type: object
       required:
         - id
+        - company_id
         - template_id
         - parameter_name
         - numeric
         - metadata
       properties:
         id:
+          type: string
+          format: uuid
+        company_id:
           type: string
           format: uuid
         template_id:
@@ -3490,11 +3509,15 @@ components:
     CreateQualityInspectionParameterRequest:
       type: object
       required:
+        - company_id
         - template_id
         - parameter_name
         - numeric
         - metadata
       properties:
+        company_id:
+          type: string
+          format: uuid
         template_id:
           type: string
           format: uuid
@@ -3519,11 +3542,15 @@ components:
     UpdateQualityInspectionParameterRequest:
       type: object
       required:
+        - company_id
         - template_id
         - parameter_name
         - numeric
         - metadata
       properties:
+        company_id:
+          type: string
+          format: uuid
         template_id:
           type: string
           format: uuid
@@ -3548,6 +3575,9 @@ components:
     PatchQualityInspectionParameterRequest:
       type: object
       properties:
+        company_id:
+          type: string
+          format: uuid
         template_id:
           type: string
           format: uuid

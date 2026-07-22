@@ -238,6 +238,7 @@ impl From<QualityInspectionReadingId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityInspectionReadingDto {
     pub id: QualityInspectionReadingId,
+    pub company_id: Uuid,
     pub inspection_id: Uuid,
     pub parameter_name: String,
     pub numeric: bool,
@@ -359,6 +360,7 @@ impl From<QualityInspectionParameterId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityInspectionParameterDto {
     pub id: QualityInspectionParameterId,
+    pub company_id: Uuid,
     pub template_id: Uuid,
     pub parameter_name: String,
     pub numeric: bool,

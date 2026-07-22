@@ -260,6 +260,9 @@ impl backbone_orm::EntityRepoMeta for QualityAction {
     fn search_fields() -> &'static [&'static str] {
         &["description"]
     }
+    fn company_field() -> Option<&'static str> {
+        Some("company_id")
+    }
 }
 
 /// Builder for QualityAction entity

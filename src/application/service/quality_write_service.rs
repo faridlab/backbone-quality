@@ -158,6 +158,7 @@ impl QualityWriteService {
         for p in &t.parameters {
             self.template_parameters.insert_parameter(&mut tx, &NewTemplateParameterRow {
                 id: Uuid::new_v4(),
+                company_id: t.company_id,
                 template_id: id,
                 parameter_name: &p.parameter_name,
                 numeric: p.numeric,
@@ -301,6 +302,7 @@ impl QualityWriteService {
             let result = if j.accepted { "accepted" } else { "rejected" };
             self.readings.insert_reading(&mut tx, &NewReadingRow {
                 id: Uuid::new_v4(),
+                company_id: i.company_id,
                 inspection_id: id,
                 parameter_name: &j.parameter_name,
                 numeric: j.numeric,
@@ -379,7 +381,9 @@ impl QualityWriteService {
     }
 
     /// Add a corrective/preventive action to an open non-conformance, advancing it to `in_progress`. The
-    /// NC row is locked for the duration so a concurrent close can't slip a fresh action past it.
+    /// NC row is locked for the duration so a concurrent close can't slip a fresh action past it. A cited
+    /// procedure must belong to the SAME company as the NC (ADR-0010 F2 — the procedure_id was previously
+    /// inserted unvalidated, so a CAPA could cite a foreign-company procedure).
     pub async fn add_quality_action(&self, a: NewQualityAction) -> Result<Uuid, QualityError> {
         if a.description.trim().is_empty() {
             return Err(QualityError::Invalid("action needs a description".into()));
@@ -391,11 +395,30 @@ impl QualityWriteService {
         // `company_auth`), so the locking read below cannot see another tenant's NC. A non-HTTP CALLER
         // (job/event driver) MUST wrap this call in `with_company_scope(Some(company_id))` or it fails closed.
         company_scope::bind_current_company(&mut tx).await?;
-        let st: Option<String> = self.non_conformances.lock_status(&mut tx, a.non_conformance_id).await?;
-        match st.as_deref() {
+        let row = self.non_conformances.lock_status(&mut tx, a.non_conformance_id).await?;
+        let nc = match row {
             None => { tx.rollback().await?; return Err(QualityError::NotFound("non-conformance")); }
-            Some("closed") => { tx.rollback().await?; return Err(QualityError::InvalidState("non-conformance is closed")); }
-            _ => {}
+            Some(r) => r,
+        };
+        if nc.status == "closed" {
+            tx.rollback().await?;
+            return Err(QualityError::InvalidState("non-conformance is closed"));
+        }
+        // F2 (ADR-0010): a cited procedure must belong to the NC's company. The NC's company is the only
+        // company we can trust here (it is what the action's company will be sub-SELECTed from at insert),
+        // so validate against IT — not the ambient scope, which is only equal to it under HTTP. The probe
+        // runs on the pool (a separate connection from the tx) wrapped in `with_company_scope` so the
+        // procedures' RLS fence admits the row; the explicit `company_id = $2` filter stays as
+        // defense-in-depth. A foreign or missing procedure reads as None → Invalid.
+        if let Some(procedure_id) = a.procedure_id {
+            let ok: Option<Uuid> = company_scope::with_company_scope(
+                Some(nc.company_id),
+                self.procedures.find_id_in_company(&self.pool, procedure_id, nc.company_id),
+            ).await?;
+            if ok.is_none() {
+                tx.rollback().await?;
+                return Err(QualityError::Invalid("cited procedure is not in this company".into()));
+            }
         }
         let id = Uuid::new_v4();
         self.actions.insert_action(&mut tx, &NewQualityActionRow {

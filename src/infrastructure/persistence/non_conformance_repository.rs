@@ -89,7 +89,8 @@ impl NonConformanceRepository {
         Ok(())
     }
 
-    /// Lock the NC row and read its status — the gate a concurrent close must serialize against.
+    /// Lock the NC row and read its company + status — the gate a concurrent close must serialize
+    /// against, and the company a CAPA action's cited procedure is validated against (ADR-0010 F2).
     ///
     /// Takes the CALLER'S connection: the lock must be held across the action insert that follows. The
     /// caller has already bound the scope on that connection — don't re-bind here.
@@ -97,14 +98,15 @@ impl NonConformanceRepository {
         &self,
         conn: &mut sqlx::PgConnection,
         nc_id: Uuid,
-    ) -> Result<Option<String>, sqlx::Error> {
-        sqlx::query_scalar(
-            r#"SELECT status::text FROM quality.non_conformances
+    ) -> Result<Option<LockedNonConformanceRow>, sqlx::Error> {
+        let row = sqlx::query(
+            r#"SELECT company_id, status::text AS status FROM quality.non_conformances
                WHERE id=$1 AND (metadata->>'deleted_at') IS NULL FOR UPDATE"#,
         )
         .bind(nc_id)
         .fetch_optional(conn)
-        .await
+        .await?;
+        Ok(row.map(|r| LockedNonConformanceRow { company_id: r.get("company_id"), status: r.get("status") }))
     }
 
     /// Lock the NC row and read the company + status the close decision needs. The company is only

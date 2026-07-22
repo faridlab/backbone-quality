@@ -44,6 +44,7 @@ pub struct QualityInspectionReadingPaginatedResult {
 /// Filter parameters for list queries
 #[derive(Debug, Clone, Default)]
 pub struct QualityInspectionReadingFilter {
+    pub company_id: Option<Uuid>,
     pub inspection_id: Option<Uuid>,
     pub parameter_name: Option<String>,
     pub numeric: Option<bool>,
@@ -55,7 +56,7 @@ pub struct QualityInspectionReadingFilter {
 impl QualityInspectionReadingFilter {
     /// Check if any filter is set
     pub fn has_filters(&self) -> bool {
-        self.inspection_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.manual_result.is_some() || self.result.is_some() || self.remarks.is_some()
+        self.company_id.is_some() || self.inspection_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.manual_result.is_some() || self.result.is_some() || self.remarks.is_some()
     }
 }
 
