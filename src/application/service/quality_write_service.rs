@@ -323,7 +323,7 @@ impl QualityWriteService {
         // subscribes to it to accept/reject the lot, so a crash between commit and the in-proc publish must
         // not drop it. Then commit, then publish in-proc (the fast path; the relay drains the outbox).
         let record = backbone_outbox::OutboxRecord::new(
-            "QualityInspectionCompleted", "QualityInspection", id.to_string(),
+            "QualityInspectionCompleted", "QualityInspection", id.to_string(), i.company_id,
             serde_json::to_value(&event).map_err(|e| QualityError::Invalid(e.to_string()))?,
             chrono::Utc::now(),
         );
