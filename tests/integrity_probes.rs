@@ -56,16 +56,16 @@ async fn ip2_close_blocked_by_incomplete_action() {
         company_id: company, subject: "issue".into(), source_inspection_id: None, item_id: None,
         severity: "medium".into(), description: None,
     }, dt("2026-07-07T09:00:00Z"), &sink).await.unwrap();
-    let a1 = svc.add_quality_action(NewQualityAction { non_conformance_id: nc, action_type: "corrective".into(),
+    let a1 = svc.add_quality_action(company, NewQualityAction { non_conformance_id: nc, action_type: "corrective".into(),
         procedure_id: None, description: "fix".into(), due_date: None }).await.unwrap();
-    let a2 = svc.add_quality_action(NewQualityAction { non_conformance_id: nc, action_type: "preventive".into(),
+    let a2 = svc.add_quality_action(company, NewQualityAction { non_conformance_id: nc, action_type: "preventive".into(),
         procedure_id: None, description: "prevent".into(), due_date: None }).await.unwrap();
 
-    svc.complete_action(a1, dt("2026-07-07T10:00:00Z")).await.unwrap();
-    assert!(matches!(svc.close_non_conformance(nc, dt("2026-07-07T10:30:00Z"), &sink).await, Err(QualityError::InvalidState(_))),
+    svc.complete_action(company, a1, dt("2026-07-07T10:00:00Z")).await.unwrap();
+    assert!(matches!(svc.close_non_conformance(company, nc, dt("2026-07-07T10:30:00Z"), &sink).await, Err(QualityError::InvalidState(_))),
         "one action still open → close refused");
-    svc.complete_action(a2, dt("2026-07-07T11:00:00Z")).await.unwrap();
-    svc.close_non_conformance(nc, dt("2026-07-07T11:30:00Z"), &sink).await.unwrap();
+    svc.complete_action(company, a2, dt("2026-07-07T11:00:00Z")).await.unwrap();
+    svc.close_non_conformance(company, nc, dt("2026-07-07T11:30:00Z"), &sink).await.unwrap();
     let st: String = sqlx::query_scalar("SELECT status::text FROM quality.non_conformances WHERE id=$1")
         .bind(nc).fetch_one(&pool).await.unwrap();
     assert_eq!(st, "closed");
@@ -81,9 +81,9 @@ async fn ip3_no_action_on_closed_nc() {
         company_id: company, subject: "issue".into(), source_inspection_id: None, item_id: None,
         severity: "low".into(), description: None,
     }, dt("2026-07-07T09:00:00Z"), &sink).await.unwrap();
-    svc.close_non_conformance(nc, dt("2026-07-07T09:10:00Z"), &sink).await.unwrap(); // no actions → closeable
+    svc.close_non_conformance(company, nc, dt("2026-07-07T09:10:00Z"), &sink).await.unwrap(); // no actions → closeable
 
-    let err = svc.add_quality_action(NewQualityAction { non_conformance_id: nc, action_type: "corrective".into(),
+    let err = svc.add_quality_action(company, NewQualityAction { non_conformance_id: nc, action_type: "corrective".into(),
         procedure_id: None, description: "late".into(), due_date: None }).await.unwrap_err();
     assert!(matches!(err, QualityError::InvalidState(_)), "closed NC rejects new actions");
 }
@@ -98,10 +98,10 @@ async fn ip4_complete_action_idempotent() {
         company_id: company, subject: "issue".into(), source_inspection_id: None, item_id: None,
         severity: "low".into(), description: None,
     }, dt("2026-07-07T09:00:00Z"), &sink).await.unwrap();
-    let a = svc.add_quality_action(NewQualityAction { non_conformance_id: nc, action_type: "corrective".into(),
+    let a = svc.add_quality_action(company, NewQualityAction { non_conformance_id: nc, action_type: "corrective".into(),
         procedure_id: None, description: "fix".into(), due_date: None }).await.unwrap();
-    svc.complete_action(a, dt("2026-07-07T10:00:00Z")).await.unwrap();
-    svc.complete_action(a, dt("2026-07-07T11:00:00Z")).await.unwrap(); // no-op
+    svc.complete_action(company, a, dt("2026-07-07T10:00:00Z")).await.unwrap();
+    svc.complete_action(company, a, dt("2026-07-07T11:00:00Z")).await.unwrap(); // no-op
 }
 
 /// IP-7 (completeness council 2026-07-07) — an in-process inspection produces a ROUTABLE disposition.

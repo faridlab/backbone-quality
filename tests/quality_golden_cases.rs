@@ -102,19 +102,19 @@ async fn qgc3_nc_capa_close_flow() {
         company_id: company, subject: "Undersized widgets".into(), source_inspection_id: Some(out.inspection_id),
         item_id: Some(item), severity: "high".into(), description: None,
     }, dt("2026-07-07T09:05:00Z"), &sink).await.unwrap();
-    let action = svc.add_quality_action(NewQualityAction {
+    let action = svc.add_quality_action(company, NewQualityAction {
         non_conformance_id: nc, action_type: "corrective".into(), procedure_id: None,
         description: "Re-calibrate the lathe".into(), due_date: None,
     }).await.unwrap();
 
     // Can't close while the action is open.
-    assert!(matches!(svc.close_non_conformance(nc, dt("2026-07-07T10:00:00Z"), &sink).await, Err(QualityError::InvalidState(_))));
+    assert!(matches!(svc.close_non_conformance(company, nc, dt("2026-07-07T10:00:00Z"), &sink).await, Err(QualityError::InvalidState(_))));
     let st: String = sqlx::query_scalar("SELECT status::text FROM quality.non_conformances WHERE id=$1")
         .bind(nc).fetch_one(&pool).await.unwrap();
     assert_eq!(st, "in_progress", "adding an action advances the NC");
 
-    svc.complete_action(action, dt("2026-07-07T11:00:00Z")).await.unwrap();
-    svc.close_non_conformance(nc, dt("2026-07-07T12:00:00Z"), &sink).await.unwrap();
+    svc.complete_action(company, action, dt("2026-07-07T11:00:00Z")).await.unwrap();
+    svc.close_non_conformance(company, nc, dt("2026-07-07T12:00:00Z"), &sink).await.unwrap();
     let st2: String = sqlx::query_scalar("SELECT status::text FROM quality.non_conformances WHERE id=$1")
         .bind(nc).fetch_one(&pool).await.unwrap();
     assert_eq!(st2, "closed");

@@ -384,106 +384,133 @@ impl QualityWriteService {
     /// NC row is locked for the duration so a concurrent close can't slip a fresh action past it. A cited
     /// procedure must belong to the SAME company as the NC (ADR-0010 F2 — the procedure_id was previously
     /// inserted unvalidated, so a CAPA could cite a foreign-company procedure).
-    pub async fn add_quality_action(&self, a: NewQualityAction) -> Result<Uuid, QualityError> {
-        if a.description.trim().is_empty() {
-            return Err(QualityError::Invalid("action needs a description".into()));
-        }
-        let mut tx = self.pool.begin().await?;
-        // RLS scope (ADR-0008), ID-only pattern: this method carries NO company — it is identified by the
-        // non-conformance id alone, and the action's company is derived by sub-SELECT from the NC row. So
-        // bind the AMBIENT task-local scope onto the tx: under HTTP that is the caller's company (set by
-        // `company_auth`), so the locking read below cannot see another tenant's NC. A non-HTTP CALLER
-        // (job/event driver) MUST wrap this call in `with_company_scope(Some(company_id))` or it fails closed.
-        company_scope::bind_current_company(&mut tx).await?;
-        let row = self.non_conformances.lock_status(&mut tx, a.non_conformance_id).await?;
-        let nc = match row {
-            None => { tx.rollback().await?; return Err(QualityError::NotFound("non-conformance")); }
-            Some(r) => r,
-        };
-        if nc.status == "closed" {
-            tx.rollback().await?;
-            return Err(QualityError::InvalidState("non-conformance is closed"));
-        }
-        // F2 (ADR-0010): a cited procedure must belong to the NC's company. The NC's company is the only
-        // company we can trust here (it is what the action's company will be sub-SELECTed from at insert),
-        // so validate against IT — not the ambient scope, which is only equal to it under HTTP. The probe
-        // runs on the pool (a separate connection from the tx) wrapped in `with_company_scope` so the
-        // procedures' RLS fence admits the row; the explicit `company_id = $2` filter stays as
-        // defense-in-depth. A foreign or missing procedure reads as None → Invalid.
-        if let Some(procedure_id) = a.procedure_id {
-            let ok: Option<Uuid> = company_scope::with_company_scope(
-                Some(nc.company_id),
-                self.procedures.find_id_in_company(&self.pool, procedure_id, nc.company_id),
-            ).await?;
-            if ok.is_none() {
-                tx.rollback().await?;
-                return Err(QualityError::Invalid("cited procedure is not in this company".into()));
+    ///
+    /// `company_id` scopes the lookup so a principal of company A cannot add an action to company B's NC
+    /// by knowing its id — proving *who* the caller is is not enough, the row must be theirs. A mismatched
+    /// tenant is indistinguishable from a missing NC (`NotFound`), so this does not leak whether the id
+    /// exists.
+    pub async fn add_quality_action(
+        &self,
+        company_id: Uuid,
+        a: NewQualityAction,
+    ) -> Result<Uuid, QualityError> {
+        // RLS scope (ADR-0008): company on the parameter — the locking read, the procedure probe, and the
+        // inserts all run inside the scope; the tx is bound explicitly. A foreign NC reads as absent
+        // (`NotFound`).
+        company_scope::with_company_scope(Some(company_id), async move {
+            if a.description.trim().is_empty() {
+                return Err(QualityError::Invalid("action needs a description".into()));
             }
-        }
-        let id = Uuid::new_v4();
-        self.actions.insert_action(&mut tx, &NewQualityActionRow {
-            id,
-            non_conformance_id: a.non_conformance_id,
-            action_type: &a.action_type,
-            procedure_id: a.procedure_id,
-            description: &a.description,
-            due_date: a.due_date,
-        }).await?;
-        self.non_conformances.mark_in_progress(&mut tx, a.non_conformance_id).await?;
-        tx.commit().await?;
-        Ok(id)
+            let mut tx = self.pool.begin().await?;
+            company_scope::bind_company_on(&mut tx, company_id).await?;
+            let row = self.non_conformances.lock_status(&mut tx, a.non_conformance_id).await?;
+            let nc = match row {
+                None => { tx.rollback().await?; return Err(QualityError::NotFound("non-conformance")); }
+                Some(r) => r,
+            };
+            if nc.status == "closed" {
+                tx.rollback().await?;
+                return Err(QualityError::InvalidState("non-conformance is closed"));
+            }
+            // F2 (ADR-0010): a cited procedure must belong to the NC's company. The NC's company is the
+            // only company we can trust here (it is what the action's company will be sub-SELECTed from at
+            // insert), so validate against IT. The probe runs on the pool (a separate connection from the
+            // tx) wrapped in `with_company_scope` so the procedures' RLS fence admits the row; the explicit
+            // `company_id = $2` filter stays as defense-in-depth. A foreign or missing procedure reads as
+            // None → Invalid.
+            if let Some(procedure_id) = a.procedure_id {
+                let ok: Option<Uuid> = company_scope::with_company_scope(
+                    Some(nc.company_id),
+                    self.procedures.find_id_in_company(&self.pool, procedure_id, nc.company_id),
+                ).await?;
+                if ok.is_none() {
+                    tx.rollback().await?;
+                    return Err(QualityError::Invalid("cited procedure is not in this company".into()));
+                }
+            }
+            let id = Uuid::new_v4();
+            self.actions.insert_action(&mut tx, &NewQualityActionRow {
+                id,
+                non_conformance_id: a.non_conformance_id,
+                action_type: &a.action_type,
+                procedure_id: a.procedure_id,
+                description: &a.description,
+                due_date: a.due_date,
+            }).await?;
+            self.non_conformances.mark_in_progress(&mut tx, a.non_conformance_id).await?;
+            tx.commit().await?;
+            Ok(id)
+        }).await
     }
 
     /// Mark an action completed (terminal). Idempotent — a re-complete is a no-op.
-    pub async fn complete_action(&self, action_id: Uuid, now: DateTime<Utc>) -> Result<(), QualityError> {
-        // RLS scope (ADR-0008), ID-only pattern: identified by the action id alone, with no company to
-        // scope from. Both statements ride the REQUEST-dedicated connection, which carries the caller's
-        // `app.company_id` — another tenant's action is simply not found. A non-HTTP CALLER must wrap this
-        // in `with_company_scope(Some(company_id))`.
-        let moved = self.actions.complete(&self.pool, action_id, now).await?;
-        if moved == 0 {
-            // Either already completed (idempotent no-op) or not found.
-            let exists: Option<Uuid> = self.actions.exists(&self.pool, action_id).await?;
-            if exists.is_none() {
-                return Err(QualityError::NotFound("action"));
+    ///
+    /// `company_id` scopes the lookup so a principal of company A cannot complete company B's action by
+    /// knowing its id — a mismatched tenant's action is simply not found, indistinguishable from a missing
+    /// one.
+    pub async fn complete_action(
+        &self,
+        company_id: Uuid,
+        action_id: Uuid,
+        now: DateTime<Utc>,
+    ) -> Result<(), QualityError> {
+        // RLS scope (ADR-0008): company on the parameter — scope both the complete and the existence probe
+        // so a foreign action reads as absent (`NotFound`).
+        company_scope::with_company_scope(Some(company_id), async move {
+            let moved = self.actions.complete(&self.pool, action_id, now).await?;
+            if moved == 0 {
+                // Either already completed (idempotent no-op) or not found.
+                let exists: Option<Uuid> = self.actions.exists(&self.pool, action_id).await?;
+                if exists.is_none() {
+                    return Err(QualityError::NotFound("action"));
+                }
             }
-        }
-        Ok(())
+            Ok(())
+        }).await
     }
 
     /// Close a non-conformance — only once every action is completed. The NC row is locked so a
     /// concurrent `add_quality_action` serializes: it either lands before the close (blocking it) or sees
     /// the closed status and is refused. Emits `NonConformanceClosed`.
+    ///
+    /// `company_id` scopes the lookup so a principal of company A cannot close company B's NC by knowing
+    /// its id — a mismatched tenant's NC reads as absent (`NotFound`), indistinguishable from a missing
+    /// one.
     pub async fn close_non_conformance(
         &self,
+        company_id: Uuid,
         nc_id: Uuid,
         now: DateTime<Utc>,
         sink: &dyn QualityEventSink,
     ) -> Result<(), QualityError> {
-        let mut tx = self.pool.begin().await?;
-        // RLS scope (ADR-0008), ID-only pattern: identified by the NC id alone — the company is only known
-        // AFTER the locking read below, so it cannot be bound up front. Bind the AMBIENT task-local scope
-        // (the caller's company under HTTP) so that read is fenced; a non-HTTP CALLER MUST wrap this call
-        // in `with_company_scope(Some(company_id))` or it fails closed.
-        company_scope::bind_current_company(&mut tx).await?;
-        let row = self.non_conformances.lock_for_close(&mut tx, nc_id).await?;
-        let row = match row {
-            Some(r) => r,
-            None => { tx.rollback().await?; return Err(QualityError::NotFound("non-conformance")); }
-        };
-        if row.status == "closed" {
-            tx.rollback().await?;
-            return Ok(()); // idempotent
-        }
-        let open_actions: i64 = self.actions.count_incomplete(&mut tx, nc_id).await?;
-        if open_actions > 0 {
-            tx.rollback().await?;
-            return Err(QualityError::InvalidState("cannot close — incomplete actions remain"));
-        }
-        let company_id: Uuid = row.company_id;
-        self.non_conformances.close(&mut tx, nc_id, now).await?;
-        tx.commit().await?;
-        sink.publish(&QualityEvent::NonConformanceClosed(NonConformanceClosed { non_conformance_id: nc_id, company_id }));
-        Ok(())
+        // RLS scope (ADR-0008): company on the parameter — scope the locking read + close so a foreign NC
+        // reads as absent. The tx is bound explicitly; the `company_id` carried in the published event is
+        // the row's own (which equals the parameter, the row having been admitted by the fence).
+        company_scope::with_company_scope(Some(company_id), async move {
+            let mut tx = self.pool.begin().await?;
+            company_scope::bind_company_on(&mut tx, company_id).await?;
+            let row = self.non_conformances.lock_for_close(&mut tx, nc_id).await?;
+            let row = match row {
+                Some(r) => r,
+                None => { tx.rollback().await?; return Err(QualityError::NotFound("non-conformance")); }
+            };
+            if row.status == "closed" {
+                tx.rollback().await?;
+                return Ok(()); // idempotent
+            }
+            let open_actions: i64 = self.actions.count_incomplete(&mut tx, nc_id).await?;
+            if open_actions > 0 {
+                tx.rollback().await?;
+                return Err(QualityError::InvalidState("cannot close — incomplete actions remain"));
+            }
+            let row_company_id: Uuid = row.company_id;
+            self.non_conformances.close(&mut tx, nc_id, now).await?;
+            tx.commit().await?;
+            sink.publish(&QualityEvent::NonConformanceClosed(NonConformanceClosed {
+                non_conformance_id: nc_id,
+                company_id: row_company_id,
+            }));
+            Ok(())
+        }).await
     }
 }
