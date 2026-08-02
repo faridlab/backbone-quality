@@ -1,0 +1,78 @@
+name: tests
+
+# Fail-loud test gating for backbone-quality (council recommendation #1, 2026-08-02).
+# Runs the live-DB test binaries (verdict oracle, integrity probes, outbox durability,
+# cross-module seam) against a real Postgres on every push, so the suite actually gates
+# releases. The HTTP integration tests are #[ignore]d — no service mounts QualityModule yet.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # tests/common/mod.rs::pool() skips gracefully when this is unset; CI always sets it
+  # so the four logic binaries run and fail loud instead of skipping.
+  DATABASE_URL: postgres://postgres:postgres@localhost:5432/backbone_quality
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: backbone_quality
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout backbone-quality
+        uses: actions/checkout@v4
+
+      - name: Checkout backbone-inventory (dev-dep + inventory schema for QSEAM-1)
+        # The path dev-dependency `../backbone-inventory` must resolve for the build
+        # to compile, and QSEAM-1 migrates the `inventory` schema. Clone to the parent
+        # of the workspace — that is where the relative path points.
+        # If backbone-inventory is ever made private, prefix the URL with
+        # `https://x-access-token:${{ secrets.GITHUB_TOKEN }}@`.
+        run: git clone --depth 1 https://github.com/faridlab/backbone-inventory.git ../backbone-inventory
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install PostgreSQL client (psql)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply quality + inventory migrations
+        # `ls … | sort` orders by the timestamp prefix == chronological. ON_ERROR_STOP
+        # makes any migration failure fail the job loud. quality.* and inventory.* live
+        # in separate schemas, so applying both to one DB is safe.
+        run: |
+          set -e
+          for f in $(ls migrations/*.up.sql | sort); do
+            echo ":: applying $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+          for f in $(ls ../backbone-inventory/migrations/*.up.sql | sort); do
+            echo ":: applying $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - name: Run tests
+        # DATABASE_URL is set, so the four logic binaries run against the migrated DB.
+        # The 7 HTTP integration tests are #[ignore]d (no service mounts QualityModule).
+        run: cargo test --verbose

@@ -29,7 +29,7 @@ async fn inspect_diameter(svc: &QualityWriteService, company: Uuid, tpl: Uuid, i
 /// IP-1 — an NC cannot cite a NON-rejected inspection (you don't raise an NC on a passing inspection).
 #[tokio::test]
 async fn ip1_nc_requires_rejected_inspection() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
@@ -48,7 +48,7 @@ async fn ip1_nc_requires_rejected_inspection() {
 /// IP-2 — an NC closes only when every action is completed; an incomplete action blocks the close.
 #[tokio::test]
 async fn ip2_close_blocked_by_incomplete_action() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
     let company = Uuid::new_v4();
@@ -74,7 +74,8 @@ async fn ip2_close_blocked_by_incomplete_action() {
 /// IP-3 — no action can be added to a closed NC.
 #[tokio::test]
 async fn ip3_no_action_on_closed_nc() {
-    let svc = QualityWriteService::new(pool().await);
+    let Some(pool) = pool().await else { return; };
+    let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
     let company = Uuid::new_v4();
     let nc = svc.raise_non_conformance(NewNonConformance {
@@ -91,7 +92,8 @@ async fn ip3_no_action_on_closed_nc() {
 /// IP-4 — completing an action is idempotent (a retry is a no-op, not an error).
 #[tokio::test]
 async fn ip4_complete_action_idempotent() {
-    let svc = QualityWriteService::new(pool().await);
+    let Some(pool) = pool().await else { return; };
+    let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
     let company = Uuid::new_v4();
     let nc = svc.raise_non_conformance(NewNonConformance {
@@ -112,7 +114,8 @@ async fn ip4_complete_action_idempotent() {
 /// in-process trigger is deferred, ADR-001).
 #[tokio::test]
 async fn ip7_inspection_type_routable_on_the_event() {
-    let svc = QualityWriteService::new(pool().await);
+    let Some(pool) = pool().await else { return; };
+    let svc = QualityWriteService::new(pool.clone());
     let sink = CapturingSink::new();
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
     let tpl = numeric_template(&svc, company).await;
@@ -144,7 +147,8 @@ async fn ip7_inspection_type_routable_on_the_event() {
 /// is refused, never silently passed.
 #[tokio::test]
 async fn ip6_verdict_requires_full_parameter_coverage() {
-    let svc = QualityWriteService::new(pool().await);
+    let Some(pool) = pool().await else { return; };
+    let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
     // A two-parameter template: Diameter (numeric) + Finish (manual).
@@ -194,7 +198,8 @@ async fn ip6_verdict_requires_full_parameter_coverage() {
 /// IP-5 — a numeric reading with no measured value cannot be accepted (an unmeasured spec is a fail).
 #[tokio::test]
 async fn ip5_numeric_reading_needs_value() {
-    let svc = QualityWriteService::new(pool().await);
+    let Some(pool) = pool().await else { return; };
+    let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
     let tpl = numeric_template(&svc, company).await;

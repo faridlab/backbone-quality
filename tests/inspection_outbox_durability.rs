@@ -16,7 +16,7 @@ use uuid::Uuid;
 // QOD-1 — an inspection durably stages its disposition despite the dropped in-proc publish.
 #[tokio::test]
 async fn qod1_disposition_is_durably_staged() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
     let tpl = svc.create_template(NewTemplate {

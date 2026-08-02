@@ -12,12 +12,23 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 
+/// Live-DB tests require an explicit `DATABASE_URL`. When it is unset, [`pool`]
+/// returns `None` and each test skips gracefully — matching the convention in
+/// `backbone-orm/tests/rls_scope_live.rs`. CI always sets it, so the tests run
+/// and gate there; local runs without a Postgres stay clean instead of panicking.
 pub fn dburl() -> String {
     std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5433/backbone_quality".into())
+        .expect("DATABASE_URL must be set to run live-DB tests (call sites guard with pool())")
 }
-pub async fn pool() -> PgPool {
-    PgPool::connect(&dburl()).await.expect("connect")
+/// Returns `None` (skip) when no `DATABASE_URL` is configured; otherwise connects
+/// and returns `Some(pool)`. A connect failure with a DSN present is a real
+/// problem, so it `.expect`s — fail loud, never false-green.
+pub async fn pool() -> Option<PgPool> {
+    if std::env::var("DATABASE_URL").is_err() {
+        eprintln!("skipping live-DB test: DATABASE_URL not set");
+        return None;
+    }
+    Some(PgPool::connect(&dburl()).await.expect("connect"))
 }
 pub fn dt(s: &str) -> DateTime<Utc> {
     DateTime::parse_from_rfc3339(s).unwrap().with_timezone(&Utc)

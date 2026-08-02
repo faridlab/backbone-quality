@@ -19,7 +19,7 @@ use uuid::Uuid;
 /// QSEAM-1 — an incoming inspection links a REAL upstream Purchase Receipt and signals the disposition.
 #[tokio::test]
 async fn qseam1_inspect_a_real_purchase_receipt() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let quality = QualityWriteService::new(pool.clone());
     let inventory = backbone_inventory::application::service::inventory_write_service::InventoryWriteService::new(pool.clone());
     let sink = CapturingSink::new();
@@ -32,6 +32,7 @@ async fn qseam1_inspect_a_real_purchase_receipt() {
         receipt_number: format!("PR-{}", Uuid::new_v4()),
         company_id: company, branch_id: None, supplier_id: Uuid::new_v4(), source_po_id: None,
         warehouse_id: Uuid::new_v4(), posting_date: chrono::Utc::now().date_naive(),
+        currency: "USD".into(),
         inventory_account_id: Uuid::new_v4(), grir_account_id: Uuid::new_v4(),
         lines: vec![ReceiptLine { item_id: item, quantity: dec("100"), rate: dec("2500") }],
     }).await.unwrap();

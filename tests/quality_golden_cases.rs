@@ -27,7 +27,7 @@ async fn diameter_color_template(svc: &QualityWriteService, company: Uuid, item:
 /// QGC-1 — every reading meets its criterion → ACCEPTED, event carries accepted=true.
 #[tokio::test]
 async fn qgc1_all_in_spec_accepted() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = CapturingSink::new();
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
@@ -53,7 +53,7 @@ async fn qgc1_all_in_spec_accepted() {
 /// QGC-2 — one reading out of spec → REJECTED (and only the failing reading is marked rejected).
 #[tokio::test]
 async fn qgc2_out_of_spec_rejected() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = CapturingSink::new();
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
@@ -83,7 +83,7 @@ async fn qgc2_out_of_spec_rejected() {
 /// action is completed.
 #[tokio::test]
 async fn qgc3_nc_capa_close_flow() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = CapturingSink::new();
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
@@ -123,7 +123,7 @@ async fn qgc3_nc_capa_close_flow() {
 /// QGC-4 — the input guards.
 #[tokio::test]
 async fn qgc4_validation() {
-    let pool = pool().await;
+    let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
     let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
