@@ -105,6 +105,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    #[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
     async fn test_quality_action_crud() {
         let mut test = QualityActionApiTest::new();
         let results = test.run_all().await;

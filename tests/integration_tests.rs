@@ -11,6 +11,7 @@ mod integration;
 use integration::tests::*;
 
 #[tokio::test]
+#[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
 async fn test_non_conformance_api() {
     let mut test = NonConformanceApiTest::new();
     let results = test.run_all().await;
@@ -25,6 +26,7 @@ async fn test_non_conformance_api() {
 }
 
 #[tokio::test]
+#[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
 async fn test_quality_action_api() {
     let mut test = QualityActionApiTest::new();
     let results = test.run_all().await;
@@ -39,6 +41,7 @@ async fn test_quality_action_api() {
 }
 
 #[tokio::test]
+#[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
 async fn test_quality_inspection_api() {
     let mut test = QualityInspectionApiTest::new();
     let results = test.run_all().await;
@@ -53,6 +56,7 @@ async fn test_quality_inspection_api() {
 }
 
 #[tokio::test]
+#[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
 async fn test_quality_inspection_reading_api() {
     let mut test = QualityInspectionReadingApiTest::new();
     let results = test.run_all().await;
@@ -67,6 +71,7 @@ async fn test_quality_inspection_reading_api() {
 }
 
 #[tokio::test]
+#[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
 async fn test_quality_inspection_template_api() {
     let mut test = QualityInspectionTemplateApiTest::new();
     let results = test.run_all().await;
@@ -81,6 +86,7 @@ async fn test_quality_inspection_template_api() {
 }
 
 #[tokio::test]
+#[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
 async fn test_quality_inspection_parameter_api() {
     let mut test = QualityInspectionParameterApiTest::new();
     let results = test.run_all().await;
@@ -95,6 +101,7 @@ async fn test_quality_inspection_parameter_api() {
 }
 
 #[tokio::test]
+#[ignore = "requires a running service that mounts QualityModule; none exists yet — run with --ignored when a host service is available"]
 async fn test_quality_procedure_api() {
     let mut test = QualityProcedureApiTest::new();
     let results = test.run_all().await;

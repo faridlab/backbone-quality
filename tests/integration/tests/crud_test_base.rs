@@ -128,9 +128,15 @@ impl<G: TestDataGenerator> GenericCrudTest<G> {
         }
     }
 
-    /// Create a skipped result for when server isn't available
+    /// Create a result for when the server isn't available.
+    ///
+    /// Fails LOUD, never false-green. These tests are `#[ignore]`d by default (no
+    /// service mounts QualityModule yet), so this path only fires on an explicit
+    /// `cargo test --ignored`. An opt-in run against a missing/unregistered server
+    /// must report failure — not silently pass as "SKIPPED" — so the suite can never
+    /// claim green without having made a single assertion.
     fn skipped_result(&self, test_name: &str, reason: &str) -> TestResult {
-        TestResult::success(test_name, &format!("SKIPPED: {}", reason))
+        TestResult::failure(test_name, &format!("no live server: {}", reason))
     }
 
     /// Test: List entities (GET /collection)
