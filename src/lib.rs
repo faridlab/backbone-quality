@@ -100,6 +100,33 @@ impl QualityModule {
             .merge(create_quality_procedure_routes(self.quality_procedure_service.clone()))
     }
 
+    /// Mount only the read (GET) endpoints for every entity — the safe,
+    /// side-effect-free query surface. Unlike [`Self::all_crud_routes`], this
+    /// performs no writes and is suitable for restricted or unauthenticated read
+    /// access (dashboards, reference lookups). Mutations are intentionally NOT
+    /// served here: serve them via the validated `QualityWriteService`, or an
+    /// auth-gated composition — not the unguarded `*_write_routes`.
+    pub fn read_routes(&self) -> Router {
+        use presentation::http::{
+            create_non_conformance_read_routes,
+            create_quality_action_read_routes,
+            create_quality_inspection_read_routes,
+            create_quality_inspection_reading_read_routes,
+            create_quality_inspection_template_read_routes,
+            create_quality_inspection_parameter_read_routes,
+            create_quality_procedure_read_routes,
+        };
+
+        Router::new()
+            .merge(create_non_conformance_read_routes(self.non_conformance_service.clone()))
+            .merge(create_quality_action_read_routes(self.quality_action_service.clone()))
+            .merge(create_quality_inspection_read_routes(self.quality_inspection_service.clone()))
+            .merge(create_quality_inspection_reading_read_routes(self.quality_inspection_reading_service.clone()))
+            .merge(create_quality_inspection_template_read_routes(self.quality_inspection_template_service.clone()))
+            .merge(create_quality_inspection_parameter_read_routes(self.quality_inspection_parameter_service.clone()))
+            .merge(create_quality_procedure_read_routes(self.quality_procedure_service.clone()))
+    }
+
     /// Deprecated alias for [`Self::all_crud_routes`]. `routes()` reads like
     /// "the routes" but mounts UNVALIDATED generic CRUD on every entity — a naive
     /// mount exposes unguarded writes. Compose a guarded router (read + validated
