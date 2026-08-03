@@ -13,6 +13,17 @@
 user_owned:
   - "src/application/service/quality_events.rs"
   - "src/application/service/quality_write_service.rs"
+  # Hand-owned module surface. lib.rs carries the hand-authored `read_routes()`
+  # convenience; exports/services.rs carries the `QualityQueryService`
+  # forward-declaration note. Regenerate silently overwrote both while they sat
+  # as inline edits in generated territory (ADR-0003's single most common
+  # regression), and inline CUSTOM markers could NOT protect them — the generator
+  # exposes no marker slot in `impl QualityModule`, and it resets the SERVICES
+  # block to its placeholder on every run. Owned wholesale so regenerate never
+  # touches them; hand-sync the module wiring / query-service trait when entities
+  # change, exactly as for the repositories below.
+  - "src/lib.rs"
+  - "src/exports/services.rs"
   # Own the hand-written quality SQL (the template + criteria definition, the inspection verdict's
   # header/readings inserts, the CAPA lifecycle's locked reads and gated transitions) that the write
   # service orchestrates. Declared here — not renamed with a `_custom` suffix — so the generator skips
@@ -29,6 +40,13 @@ user_owned:
   - "tests/quality_inspection_seam.rs"
   - "scripts/**"
   - "tests/inspection_outbox_durability.rs"
+  # Hand-orchestrated HTTP integration suite. The `#[ignore]` gating (no host
+  # service mounts QualityModule yet) and the fail-loud `skipped_result()` harness
+  # sit on generated test lines that no inline CUSTOM marker can protect, so the
+  # whole suite is user-owned — regenerate never touches it. (ADR-0003.)
+  - "tests/integration_tests.rs"
+  - "tests/integration/tests/crud_test_base.rs"
+  - "tests/integration/tests/*_api_test.rs"
   # Hand-authored behavior (services + their HTTP surface). Examples:
   # - "src/application/service/onboarding_service.rs"
   # - "src/presentation/http/guarded_routes.rs"
