@@ -344,3 +344,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionDto> for QualityInspec
 // Add custom DTOs specific to QualityInspection here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

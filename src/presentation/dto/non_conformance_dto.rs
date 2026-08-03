@@ -325,3 +325,4 @@ impl backbone_core::ApplyUpdateDto<UpdateNonConformanceDto> for NonConformance {
 // Add custom DTOs specific to NonConformance here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

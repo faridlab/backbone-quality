@@ -285,3 +285,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityProcedureDto> for QualityProcedu
 // Add custom DTOs specific to QualityProcedure here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

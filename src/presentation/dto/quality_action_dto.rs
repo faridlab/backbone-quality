@@ -313,3 +313,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityActionDto> for QualityAction {
 // Add custom DTOs specific to QualityAction here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+
