@@ -19,6 +19,12 @@ use super::types::*;
 ///
 /// This trait defines read-only operations that other modules can use.
 /// Implementations should NOT expose internal domain logic.
+///
+/// **Forward-declared — no implementation ships yet.** This is the *intended*
+/// read contract for sibling modules, deliberately left unimplemented until a
+/// consumer actually depends on it (building the impl + its consumer-side wiring
+/// now would be YAGNI — nothing imports it today). It lands as thin delegations
+/// to the repositories the moment the first sibling module imports it.
 #[async_trait]
 pub trait QualityQueryService: Send + Sync {
     /// Get NonConformance by ID
