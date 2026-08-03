@@ -5,8 +5,6 @@
 //! These services provide the public API for other modules.
 //! They only expose read operations - writes go through events.
 
-use std::sync::Arc;
-
 use anyhow::Result;
 use async_trait::async_trait;
 use uuid::Uuid;
@@ -86,21 +84,6 @@ pub trait QualityQueryService: Send + Sync {
     /// Check if QualityProcedure exists
     async fn quality_procedure_exists(&self, id: QualityProcedureId) -> Result<bool>;
 
-}
-
-// ============================================================================
-// QUERY SERVICE IMPLEMENTATION
-// ============================================================================
-
-/// Default implementation of QualityQueryService
-pub struct QualityQueryServiceImpl<R> {
-    repository: Arc<R>,
-}
-
-impl<R> QualityQueryServiceImpl<R> {
-    pub fn new(repository: Arc<R>) -> Self {
-        Self { repository }
-    }
 }
 
 // ============================================================================

@@ -23,6 +23,7 @@ pub mod infrastructure;
 pub mod application;
 pub mod presentation;
 pub mod seeders;
+pub mod exports;
 
 // Re-exports for convenience - Domain entities
 pub use domain::entity::*;
@@ -56,13 +57,15 @@ use sqlx::PgPool;
 /// let router = quality.all_crud_routes();
 /// ```
 pub struct QualityModule {
-    pub non_conformance_service: Arc<NonConformanceService>,
-    pub quality_action_service: Arc<QualityActionService>,
-    pub quality_inspection_service: Arc<QualityInspectionService>,
-    pub quality_inspection_reading_service: Arc<QualityInspectionReadingService>,
-    pub quality_inspection_template_service: Arc<QualityInspectionTemplateService>,
-    pub quality_inspection_parameter_service: Arc<QualityInspectionParameterService>,
-    pub quality_procedure_service: Arc<QualityProcedureService>,
+    pub(crate) non_conformance_service: Arc<NonConformanceService>,
+    pub(crate) quality_action_service: Arc<QualityActionService>,
+    pub(crate) quality_inspection_service: Arc<QualityInspectionService>,
+    pub(crate) quality_inspection_reading_service: Arc<QualityInspectionReadingService>,
+    pub(crate) quality_inspection_template_service: Arc<QualityInspectionTemplateService>,
+    pub(crate) quality_inspection_parameter_service: Arc<QualityInspectionParameterService>,
+    pub(crate) quality_procedure_service: Arc<QualityProcedureService>,
+    // <<< CUSTOM FIELDS
+    // END CUSTOM
 }
 
 impl QualityModule {
