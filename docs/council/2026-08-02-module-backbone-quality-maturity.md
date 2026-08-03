@@ -2,6 +2,26 @@
 
 # Council — module:backbone-quality — focus: maturity
 
+> ## ⚠️ CORRECTION — verified 2026-08-03 (supersedes G1 and rec #2)
+>
+> **G1 is INVALID.** The "2 of 7 entities have no schema YAML" finding was a file-count artefact:
+> it counted 5 `*.model.yaml` files against 7 DB tables and concluded two entities were orphaned from
+> the SSoT. In reality the child entities are **nested models in their parent's file** —
+> `QualityInspectionParameter` is the second model in `schema/models/quality_inspection_template.model.yaml`,
+> and `QualityInspectionReading` (with its `ReadingResult` enum) is the second model in
+> `schema/models/quality_inspection.model.yaml`. Both are fully specified, FK their parent, match
+> their migrations column-for-column, and are covered by `index.model.yaml`'s `imports:` (the 5 files
+> collectively define all 7 entities + enums). This is correct aggregate co-location (Template↔Parameter,
+> Inspection↔Reading), not a gap. **Recommendation #2 (restore the G1 SSoT) is therefore VOID** —
+> authoring separate YAMLs would have created *duplicate, conflicting* model definitions. Wherever
+> G1 / "regen bomb" / rec #2 appears below, read it as superseded by this correction.
+>
+> **What survived verification:** #1 (fail-loud test gating) was the real must-fix and is **DONE**
+> (commits `f29955b`, `b4d4e03` — CI gates the verdict/outbox/seam tests against Postgres; the logic
+> harness skips cleanly without a DB; the HTTP suite no longer false-greens). The source-of-truth and
+> verification scorecard rows below are revised accordingly. The lesson: a council finding asserted
+> from a count, not a read, was falsified the moment the schema was opened — verify before acting.
+
 ## Best call
 Stand up **fail-loud test gating**: a CI workflow (workspace or module root) that runs `cargo test` against a real Postgres, plus fixes to the two false-quiet harness paths — `tests/common/mod.rs:19-21` (`PgPool::connect(...).expect("connect")` → a `sqlx::test`/migration-runner spawn that fails loud) and `crud_test_base.rs:130-134` (unreachable-server → `TestResult::success("SKIPPED…")` → must become a hard failure).
 
@@ -31,8 +51,8 @@ This is the single move because it is the root enabler. It converts every correc
 | ddd-bounded-context | bounded-context language + stable contracts | 3 | Outward BC edge is clean (Quality publishes events, doesn't self-subscribe; clean separation from Stock), but two entities' aggregate parentage is undecided in the SSoT and survives only in generated code. |
 | contract-seat | explicit/minimal outward contract | 4 | Outward surface is explicit and genuinely minimal (events + `QualityWriteService` + `New*` DTOs `pub use`'d, host owns the auth-middleware type by design), docked one point for the unimplemented `QualityQueryService` trait that reads as a contract without a backing impl. |
 | domain-expert | ubiquitous language + can represent every real state/rule | 4 | Language is faithful (NC/CAPA/inspection/template/parameter/reading/verdict/procedure) and the write engine can represent every QMS rule the module owns; held from 5 only because nothing running verifies the rules hold under drift. |
-| (focus) | source-of-truth integrity | 2 | 5 of 7 entities are properly SSoT-rooted in `schema/models/`, but the 2 that carry the verdict engine's hand-written repo methods have no `*.model.yaml` and no `index.model.yaml` entry — a direct violation of the "schema YAML is SSoT" contract and an armed regen bomb. |
-| (focus) | verification / CI maturity | 1 | Effectively zero — no CI anywhere, the logic track panics without a database, the HTTP track returns success when the server is unreachable, and the one documented in-suite bug fix (IP6 coverage) was found by reading source after release. |
+| (focus) | source-of-truth integrity | ~~2~~ **4** | **Corrected 2026-08-03:** all 7 entities + their enums ARE modeled in `schema/models/` — `QualityInspectionParameter` nests inside the template file and `QualityInspectionReading` inside the inspection file (correct aggregate co-location). The original "5 of 7 / orphans / regen bomb" finding was a file-count artefact and is withdrawn. SSoT is intact; migrations were generated from these models. |
+| (focus) | verification / CI maturity | ~~1~~ **4** | **Updated 2026-08-03 after rec #1 landed:** CI (`.github/workflows/test.yml`) now runs the verdict/outbox/seam tests against Postgres on every push; the logic harness skips cleanly when `DATABASE_URL` is unset instead of panicking; the HTTP suite is `#[ignore]`d and fail-loud. Was 1 at council time (no CI, panic-on-no-DB, false-green). |
 
 ## Parking lot
 - **G2 `QualityQueryService` impl** — defer until a sibling consumes it; orchestrator-confirmed no consumer today (recommendation #4 only doc-marks it).
