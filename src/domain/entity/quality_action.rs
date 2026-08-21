@@ -67,7 +67,7 @@ pub struct QualityAction {
 impl QualityAction {
     /// Create a builder for QualityAction
     pub fn builder() -> QualityActionBuilder {
-        QualityActionBuilder::default()
+        <QualityActionBuilder as Default>::default()
     }
 
     /// Create a new QualityAction with required fields
@@ -342,9 +342,9 @@ impl QualityActionBuilder {
             id: Uuid::new_v4(),
             company_id,
             non_conformance_id,
-            action_type: self.action_type.unwrap_or(QualityActionType::default()),
+            action_type: self.action_type.unwrap_or_default(),
             procedure_id: self.procedure_id,
-            status: self.status.unwrap_or(QualityActionStatus::default()),
+            status: self.status.unwrap_or_default(),
             description,
             due_date: self.due_date,
             completed_at: self.completed_at,

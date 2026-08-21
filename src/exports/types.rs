@@ -305,7 +305,7 @@ pub struct QualityInspectionTemplateDto {
     pub company_id: Uuid,
     pub template_name: String,
     pub item_id: Option<Uuid>,
-    pub is_active: bool,
+    pub status: QualityInspectionTemplateStatus,
     pub metadata: serde_json::Value,
 }
 
@@ -314,6 +314,7 @@ pub struct QualityInspectionTemplateDto {
 pub struct QualityInspectionTemplateSummary {
     pub id: QualityInspectionTemplateId,
     pub template_name: String,
+    pub status: QualityInspectionTemplateStatus,
 }
 
 /// Reference to QualityInspectionTemplate for foreign key relationships
@@ -425,7 +426,7 @@ pub struct QualityProcedureDto {
     pub procedure_name: String,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<String>,
-    pub is_active: bool,
+    pub status: QualityProcedureStatus,
     pub metadata: serde_json::Value,
 }
 
@@ -434,6 +435,7 @@ pub struct QualityProcedureDto {
 pub struct QualityProcedureSummary {
     pub id: QualityProcedureId,
     pub procedure_name: String,
+    pub status: QualityProcedureStatus,
 }
 
 /// Reference to QualityProcedure for foreign key relationships

@@ -28,7 +28,7 @@ impl TestDataGenerator for QualityProcedureTestData {
             "procedure_name": format!("Test {}", Uuid::new_v4().to_string().split('-').next().unwrap()),
             "parent_procedure_id": null,
             "description": null,
-            "is_active": false,
+            "status": "inactive",
             "metadata": json!({}),
         })
     }
@@ -41,7 +41,7 @@ impl TestDataGenerator for QualityProcedureTestData {
             "procedure_name": format!("Test {}", Uuid::new_v4().to_string().split('-').next().unwrap()),
             "parent_procedure_id": null,
             "description": null,
-            "is_active": false,
+            "status": "inactive",
             "metadata": json!({}),
         })
     }

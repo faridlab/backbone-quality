@@ -18,6 +18,7 @@ use validator::Validate;
 
 use crate::domain::entity::QualityProcedure;
 use crate::domain::entity::AuditMetadata;
+use crate::domain::entity::QualityProcedureStatus;
 
 // =============================================================================
 // Create DTO
@@ -44,9 +45,7 @@ pub struct CreateQualityProcedureDto {
     #[cfg_attr(feature = "validation", validate(length(max = 4000)))]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "is_active")]
-    pub is_active: bool,
+    pub status: QualityProcedureStatus,
 }
 
 // =============================================================================
@@ -74,9 +73,7 @@ pub struct UpdateQualityProcedureDto {
     #[cfg_attr(feature = "validation", validate(length(max = 4000)))]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "is_active")]
-    pub is_active: bool,
+    pub status: QualityProcedureStatus,
 }
 
 // =============================================================================
@@ -104,15 +101,14 @@ pub struct PatchQualityProcedureDto {
     #[cfg_attr(feature = "validation", validate(length(max = 4000)))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "is_active")]
-    pub is_active: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<QualityProcedureStatus>,
 }
 
 impl PatchQualityProcedureDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.is_active.is_some()
+        self.company_id.is_some() || self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.status.is_some()
     }
 }
 
@@ -136,8 +132,7 @@ pub struct QualityProcedureResponseDto {
     pub procedure_name: String,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<String>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    pub is_active: bool,
+    pub status: QualityProcedureStatus,
     pub metadata: AuditMetadata,
 }
 
@@ -213,7 +208,7 @@ impl From<QualityProcedure> for QualityProcedureResponseDto {
             procedure_name: entity.procedure_name,
             parent_procedure_id: entity.parent_procedure_id,
             description: entity.description,
-            is_active: entity.is_active,
+            status: entity.status,
             metadata: entity.metadata,
         }
     }
@@ -240,7 +235,7 @@ impl From<CreateQualityProcedureDto> for QualityProcedure {
             procedure_name: dto.procedure_name,
             parent_procedure_id: dto.parent_procedure_id,
             description: dto.description,
-            is_active: dto.is_active,
+            status: dto.status,
             metadata: AuditMetadata::default(),
         }
     }
@@ -254,7 +249,7 @@ impl From<&QualityProcedure> for QualityProcedureResponseDto {
             procedure_name: entity.procedure_name.clone(),
             parent_procedure_id: entity.parent_procedure_id.clone(),
             description: entity.description.clone(),
-            is_active: entity.is_active.clone(),
+            status: entity.status.clone(),
             metadata: entity.metadata.clone(),
         }
     }
@@ -272,7 +267,7 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityProcedureDto> for QualityProcedu
         self.procedure_name = dto.procedure_name;
         self.parent_procedure_id = dto.parent_procedure_id;
         self.description = dto.description;
-        self.is_active = dto.is_active;
+        self.status = dto.status;
         Ok(self)
     }
 }
@@ -285,4 +280,3 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityProcedureDto> for QualityProcedu
 // Add custom DTOs specific to QualityProcedure here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
-

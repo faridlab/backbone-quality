@@ -68,7 +68,7 @@ pub struct NonConformance {
 impl NonConformance {
     /// Create a builder for NonConformance
     pub fn builder() -> NonConformanceBuilder {
-        NonConformanceBuilder::default()
+        <NonConformanceBuilder as Default>::default()
     }
 
     /// Create a new NonConformance with required fields
@@ -362,8 +362,8 @@ impl NonConformanceBuilder {
             subject,
             source_inspection_id: self.source_inspection_id,
             item_id: self.item_id,
-            severity: self.severity.unwrap_or(NonConformanceSeverity::default()),
-            status: self.status.unwrap_or(NonConformanceStatus::default()),
+            severity: self.severity.unwrap_or_default(),
+            status: self.status.unwrap_or_default(),
             description: self.description,
             opened_at,
             closed_at: self.closed_at,

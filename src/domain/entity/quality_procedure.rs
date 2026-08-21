@@ -2,6 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
+
+use super::QualityProcedureStatus;
 use super::AuditMetadata;
 
 /// Strongly-typed ID for QualityProcedure
@@ -52,7 +54,7 @@ pub struct QualityProcedure {
     pub procedure_name: String,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<String>,
-    pub is_active: bool,
+    pub status: QualityProcedureStatus,
     #[serde(default)]
     #[sqlx(json)]
     pub metadata: AuditMetadata,
@@ -61,18 +63,18 @@ pub struct QualityProcedure {
 impl QualityProcedure {
     /// Create a builder for QualityProcedure
     pub fn builder() -> QualityProcedureBuilder {
-        QualityProcedureBuilder::default()
+        <QualityProcedureBuilder as Default>::default()
     }
 
     /// Create a new QualityProcedure with required fields
-    pub fn new(company_id: Uuid, procedure_name: String, is_active: bool) -> Self {
+    pub fn new(company_id: Uuid, procedure_name: String, status: QualityProcedureStatus) -> Self {
         Self {
             id: Uuid::new_v4(),
             company_id,
             procedure_name,
             parent_procedure_id: None,
             description: None,
-            is_active,
+            status,
             metadata: AuditMetadata::default(),
         }
     }
@@ -127,6 +129,11 @@ impl QualityProcedure {
         self.metadata.deleted_by.as_ref()
     }
 
+    /// Get the current status
+    pub fn status(&self) -> &QualityProcedureStatus {
+        &self.status
+    }
+
 
     // ==========================================================
     // Fluent Setters (with_* for optional fields)
@@ -164,8 +171,8 @@ impl QualityProcedure {
                 "description" => {
                     if let Ok(v) = serde_json::from_value(value) { self.description = v; }
                 }
-                "is_active" => {
-                    if let Ok(v) = serde_json::from_value(value) { self.is_active = v; }
+                "status" => {
+                    if let Ok(v) = serde_json::from_value(value) { self.status = v; }
                 }
                 _ => {} // ignore unknown fields
             }
@@ -223,6 +230,7 @@ impl backbone_orm::EntityRepoMeta for QualityProcedure {
         m.insert("id".to_string(), "uuid".to_string());
         m.insert("company_id".to_string(), "uuid".to_string());
         m.insert("parent_procedure_id".to_string(), "uuid".to_string());
+        m.insert("status".to_string(), "quality_procedure_status".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {
@@ -243,7 +251,7 @@ pub struct QualityProcedureBuilder {
     procedure_name: Option<String>,
     parent_procedure_id: Option<Uuid>,
     description: Option<String>,
-    is_active: Option<bool>,
+    status: Option<QualityProcedureStatus>,
 }
 
 impl QualityProcedureBuilder {
@@ -271,9 +279,9 @@ impl QualityProcedureBuilder {
         self
     }
 
-    /// Set the is_active field (default: `true`)
-    pub fn is_active(mut self, value: bool) -> Self {
-        self.is_active = Some(value);
+    /// Set the status field (default: `QualityProcedureStatus::default()`)
+    pub fn status(mut self, value: QualityProcedureStatus) -> Self {
+        self.status = Some(value);
         self
     }
 
@@ -290,7 +298,7 @@ impl QualityProcedureBuilder {
             procedure_name,
             parent_procedure_id: self.parent_procedure_id,
             description: self.description,
-            is_active: self.is_active.unwrap_or(true),
+            status: self.status.unwrap_or_default(),
             metadata: AuditMetadata::default(),
         })
     }

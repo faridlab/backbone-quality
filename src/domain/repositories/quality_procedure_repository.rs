@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use anyhow::Result;
 use uuid::Uuid;
 
-use crate::domain::entity::QualityProcedure;
+use crate::domain::entity::{QualityProcedure, QualityProcedureStatus};
 
 /// Pagination parameters for list queries
 #[derive(Debug, Clone, Default)]
@@ -48,13 +48,13 @@ pub struct QualityProcedureFilter {
     pub procedure_name: Option<String>,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<String>,
-    pub is_active: Option<bool>,
+    pub status: Option<QualityProcedureStatus>,
 }
 
 impl QualityProcedureFilter {
     /// Check if any filter is set
     pub fn has_filters(&self) -> bool {
-        self.company_id.is_some() || self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.is_active.is_some()
+        self.company_id.is_some() || self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.status.is_some()
     }
 }
 

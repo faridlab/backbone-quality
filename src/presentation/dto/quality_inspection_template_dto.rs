@@ -18,6 +18,7 @@ use validator::Validate;
 
 use crate::domain::entity::QualityInspectionTemplate;
 use crate::domain::entity::AuditMetadata;
+use crate::domain::entity::QualityInspectionTemplateStatus;
 
 // =============================================================================
 // Create DTO
@@ -41,9 +42,7 @@ pub struct CreateQualityInspectionTemplateDto {
     pub template_name: String,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "item_id")]
     pub item_id: Option<Uuid>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "is_active")]
-    pub is_active: bool,
+    pub status: QualityInspectionTemplateStatus,
 }
 
 // =============================================================================
@@ -68,9 +67,7 @@ pub struct UpdateQualityInspectionTemplateDto {
     pub template_name: String,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "item_id")]
     pub item_id: Option<Uuid>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(alias = "is_active")]
-    pub is_active: bool,
+    pub status: QualityInspectionTemplateStatus,
 }
 
 // =============================================================================
@@ -95,15 +92,14 @@ pub struct PatchQualityInspectionTemplateDto {
     pub template_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "item_id")]
     pub item_id: Option<Uuid>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "is_active")]
-    pub is_active: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<QualityInspectionTemplateStatus>,
 }
 
 impl PatchQualityInspectionTemplateDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.template_name.is_some() || self.item_id.is_some() || self.is_active.is_some()
+        self.company_id.is_some() || self.template_name.is_some() || self.item_id.is_some() || self.status.is_some()
     }
 }
 
@@ -126,8 +122,7 @@ pub struct QualityInspectionTemplateResponseDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub template_name: String,
     pub item_id: Option<Uuid>,
-    #[cfg_attr(feature = "openapi", schema(example = true))]
-    pub is_active: bool,
+    pub status: QualityInspectionTemplateStatus,
     pub metadata: AuditMetadata,
 }
 
@@ -202,7 +197,7 @@ impl From<QualityInspectionTemplate> for QualityInspectionTemplateResponseDto {
             company_id: entity.company_id,
             template_name: entity.template_name,
             item_id: entity.item_id,
-            is_active: entity.is_active,
+            status: entity.status,
             metadata: entity.metadata,
         }
     }
@@ -228,7 +223,7 @@ impl From<CreateQualityInspectionTemplateDto> for QualityInspectionTemplate {
             company_id: dto.company_id,
             template_name: dto.template_name,
             item_id: dto.item_id,
-            is_active: dto.is_active,
+            status: dto.status,
             metadata: AuditMetadata::default(),
         }
     }
@@ -241,7 +236,7 @@ impl From<&QualityInspectionTemplate> for QualityInspectionTemplateResponseDto {
             company_id: entity.company_id.clone(),
             template_name: entity.template_name.clone(),
             item_id: entity.item_id.clone(),
-            is_active: entity.is_active.clone(),
+            status: entity.status.clone(),
             metadata: entity.metadata.clone(),
         }
     }
@@ -258,7 +253,7 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionTemplateDto> for Quali
         self.company_id = dto.company_id;
         self.template_name = dto.template_name;
         self.item_id = dto.item_id;
-        self.is_active = dto.is_active;
+        self.status = dto.status;
         Ok(self)
     }
 }
@@ -271,4 +266,3 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionTemplateDto> for Quali
 // Add custom DTOs specific to QualityInspectionTemplate here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
-

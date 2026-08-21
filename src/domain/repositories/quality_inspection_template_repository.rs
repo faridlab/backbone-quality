@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use anyhow::Result;
 use uuid::Uuid;
 
-use crate::domain::entity::QualityInspectionTemplate;
+use crate::domain::entity::{QualityInspectionTemplate, QualityInspectionTemplateStatus};
 
 /// Pagination parameters for list queries
 #[derive(Debug, Clone, Default)]
@@ -47,13 +47,13 @@ pub struct QualityInspectionTemplateFilter {
     pub company_id: Option<Uuid>,
     pub template_name: Option<String>,
     pub item_id: Option<Uuid>,
-    pub is_active: Option<bool>,
+    pub status: Option<QualityInspectionTemplateStatus>,
 }
 
 impl QualityInspectionTemplateFilter {
     /// Check if any filter is set
     pub fn has_filters(&self) -> bool {
-        self.company_id.is_some() || self.template_name.is_some() || self.item_id.is_some() || self.is_active.is_some()
+        self.company_id.is_some() || self.template_name.is_some() || self.item_id.is_some() || self.status.is_some()
     }
 }
 

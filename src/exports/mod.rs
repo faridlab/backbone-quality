@@ -8,7 +8,7 @@
 //! ## Usage from other modules
 //!
 //! ```text
-//! use quality::exports::{NonConformanceDto, QualityQueryService};
+//! use quality::exports::{NonConformanceDto};
 //! ```
 
 mod types;
@@ -48,9 +48,6 @@ pub use events::*;
 /// - `QualityProcedureDto` - Data transfer object for QualityProcedure
 /// - `QualityProcedureSummary` - Summary view of QualityProcedure
 /// - `QualityProcedureId` - Type-safe ID wrapper
-///
-/// ## Public Services
-/// - `QualityQueryService` - Read-only queries
 ///
 /// ## Public Events
 /// - `NonConformanceCreatedEvent` - Published when NonConformance is created

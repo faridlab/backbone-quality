@@ -16,6 +16,8 @@ pub mod quality_action_status;
 pub mod inspection_type;
 pub mod inspection_status;
 pub mod reading_result;
+pub mod quality_inspection_template_status;
+pub mod quality_procedure_status;
 
 // Re-exports
 pub use non_conformance::NonConformance;
@@ -46,6 +48,8 @@ pub use quality_action_status::QualityActionStatus;
 pub use inspection_type::InspectionType;
 pub use inspection_status::InspectionStatus;
 pub use reading_result::ReadingResult;
+pub use quality_inspection_template_status::QualityInspectionTemplateStatus;
+pub use quality_procedure_status::QualityProcedureStatus;
 
 // ==========================================================================
 // Entity Trait

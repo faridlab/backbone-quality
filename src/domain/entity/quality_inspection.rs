@@ -69,7 +69,7 @@ pub struct QualityInspection {
 impl QualityInspection {
     /// Create a builder for QualityInspection
     pub fn builder() -> QualityInspectionBuilder {
-        QualityInspectionBuilder::default()
+        <QualityInspectionBuilder as Default>::default()
     }
 
     /// Create a new QualityInspection with required fields
@@ -374,12 +374,12 @@ impl QualityInspectionBuilder {
             company_id,
             template_id: self.template_id,
             item_id,
-            inspection_type: self.inspection_type.unwrap_or(InspectionType::default()),
+            inspection_type: self.inspection_type.unwrap_or_default(),
             source_type: self.source_type,
             source_id: self.source_id,
             sample_size: self.sample_size.unwrap_or(1),
             inspected_at,
-            status: self.status.unwrap_or(InspectionStatus::default()),
+            status: self.status.unwrap_or_default(),
             remarks: self.remarks,
             metadata: AuditMetadata::default(),
         })

@@ -186,4 +186,3 @@ pub fn create_protected_non_conformance_routes<A: AuthMiddleware + Send + Sync +
             }
         }))
 }
-

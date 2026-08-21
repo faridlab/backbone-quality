@@ -2,6 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
+
+use super::QualityInspectionTemplateStatus;
 use super::AuditMetadata;
 
 /// Strongly-typed ID for QualityInspectionTemplate
@@ -51,7 +53,7 @@ pub struct QualityInspectionTemplate {
     pub company_id: Uuid,
     pub template_name: String,
     pub item_id: Option<Uuid>,
-    pub is_active: bool,
+    pub status: QualityInspectionTemplateStatus,
     #[serde(default)]
     #[sqlx(json)]
     pub metadata: AuditMetadata,
@@ -60,17 +62,17 @@ pub struct QualityInspectionTemplate {
 impl QualityInspectionTemplate {
     /// Create a builder for QualityInspectionTemplate
     pub fn builder() -> QualityInspectionTemplateBuilder {
-        QualityInspectionTemplateBuilder::default()
+        <QualityInspectionTemplateBuilder as Default>::default()
     }
 
     /// Create a new QualityInspectionTemplate with required fields
-    pub fn new(company_id: Uuid, template_name: String, is_active: bool) -> Self {
+    pub fn new(company_id: Uuid, template_name: String, status: QualityInspectionTemplateStatus) -> Self {
         Self {
             id: Uuid::new_v4(),
             company_id,
             template_name,
             item_id: None,
-            is_active,
+            status,
             metadata: AuditMetadata::default(),
         }
     }
@@ -125,6 +127,11 @@ impl QualityInspectionTemplate {
         self.metadata.deleted_by.as_ref()
     }
 
+    /// Get the current status
+    pub fn status(&self) -> &QualityInspectionTemplateStatus {
+        &self.status
+    }
+
 
     // ==========================================================
     // Fluent Setters (with_* for optional fields)
@@ -153,8 +160,8 @@ impl QualityInspectionTemplate {
                 "item_id" => {
                     if let Ok(v) = serde_json::from_value(value) { self.item_id = v; }
                 }
-                "is_active" => {
-                    if let Ok(v) = serde_json::from_value(value) { self.is_active = v; }
+                "status" => {
+                    if let Ok(v) = serde_json::from_value(value) { self.status = v; }
                 }
                 _ => {} // ignore unknown fields
             }
@@ -212,6 +219,7 @@ impl backbone_orm::EntityRepoMeta for QualityInspectionTemplate {
         m.insert("id".to_string(), "uuid".to_string());
         m.insert("company_id".to_string(), "uuid".to_string());
         m.insert("item_id".to_string(), "uuid".to_string());
+        m.insert("status".to_string(), "quality_inspection_template_status".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {
@@ -231,7 +239,7 @@ pub struct QualityInspectionTemplateBuilder {
     company_id: Option<Uuid>,
     template_name: Option<String>,
     item_id: Option<Uuid>,
-    is_active: Option<bool>,
+    status: Option<QualityInspectionTemplateStatus>,
 }
 
 impl QualityInspectionTemplateBuilder {
@@ -253,9 +261,9 @@ impl QualityInspectionTemplateBuilder {
         self
     }
 
-    /// Set the is_active field (default: `true`)
-    pub fn is_active(mut self, value: bool) -> Self {
-        self.is_active = Some(value);
+    /// Set the status field (default: `QualityInspectionTemplateStatus::default()`)
+    pub fn status(mut self, value: QualityInspectionTemplateStatus) -> Self {
+        self.status = Some(value);
         self
     }
 
@@ -271,7 +279,7 @@ impl QualityInspectionTemplateBuilder {
             company_id,
             template_name,
             item_id: self.item_id,
-            is_active: self.is_active.unwrap_or(true),
+            status: self.status.unwrap_or_default(),
             metadata: AuditMetadata::default(),
         })
     }

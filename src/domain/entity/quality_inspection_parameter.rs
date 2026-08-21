@@ -64,7 +64,7 @@ pub struct QualityInspectionParameter {
 impl QualityInspectionParameter {
     /// Create a builder for QualityInspectionParameter
     pub fn builder() -> QualityInspectionParameterBuilder {
-        QualityInspectionParameterBuilder::default()
+        <QualityInspectionParameterBuilder as Default>::default()
     }
 
     /// Create a new QualityInspectionParameter with required fields

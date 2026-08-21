@@ -59,8 +59,8 @@ impl QualityInspectionTemplateRepository {
         t: &NewTemplateRow<'_>,
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
-            r#"INSERT INTO quality.quality_inspection_templates (id, company_id, template_name, item_id, is_active)
-               VALUES ($1,$2,$3,$4,true)"#,
+            r#"INSERT INTO quality.quality_inspection_templates (id, company_id, template_name, item_id, status)
+               VALUES ($1,$2,$3,$4,'active')"#,
         )
         .bind(t.id).bind(t.company_id).bind(t.template_name).bind(t.item_id)
         .execute(conn)

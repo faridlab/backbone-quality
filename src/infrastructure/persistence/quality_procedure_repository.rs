@@ -82,8 +82,8 @@ impl QualityProcedureRepository {
             pool,
             sqlx::query(
                 r#"INSERT INTO quality.quality_procedures
-                     (id, company_id, procedure_name, parent_procedure_id, description, is_active)
-                   VALUES ($1,$2,$3,$4,$5,true)"#,
+                     (id, company_id, procedure_name, parent_procedure_id, description, status)
+                   VALUES ($1,$2,$3,$4,$5,'active')"#,
             )
             .bind(p.id).bind(p.company_id).bind(p.procedure_name).bind(p.parent_procedure_id).bind(p.description),
         )

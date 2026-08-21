@@ -186,4 +186,3 @@ pub fn create_protected_quality_inspection_reading_routes<A: AuthMiddleware + Se
             }
         }))
 }
-

@@ -69,7 +69,7 @@ pub struct QualityInspectionReading {
 impl QualityInspectionReading {
     /// Create a builder for QualityInspectionReading
     pub fn builder() -> QualityInspectionReadingBuilder {
-        QualityInspectionReadingBuilder::default()
+        <QualityInspectionReadingBuilder as Default>::default()
     }
 
     /// Create a new QualityInspectionReading with required fields
@@ -377,7 +377,7 @@ impl QualityInspectionReadingBuilder {
             min_value: self.min_value,
             max_value: self.max_value,
             manual_result: self.manual_result,
-            result: self.result.unwrap_or(ReadingResult::default()),
+            result: self.result.unwrap_or_default(),
             remarks: self.remarks,
             metadata: AuditMetadata::default(),
         })

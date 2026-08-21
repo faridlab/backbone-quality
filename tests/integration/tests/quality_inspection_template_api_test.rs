@@ -27,7 +27,7 @@ impl TestDataGenerator for QualityInspectionTemplateTestData {
             "company_id": Uuid::new_v4().to_string(),
             "template_name": format!("Test {}", Uuid::new_v4().to_string().split('-').next().unwrap()),
             "item_id": null,
-            "is_active": false,
+            "status": "inactive",
             "metadata": json!({}),
         })
     }
@@ -39,7 +39,7 @@ impl TestDataGenerator for QualityInspectionTemplateTestData {
             "company_id": Uuid::new_v4().to_string(),
             "template_name": format!("Test {}", Uuid::new_v4().to_string().split('-').next().unwrap()),
             "item_id": null,
-            "is_active": false,
+            "status": "inactive",
             "metadata": json!({}),
         })
     }

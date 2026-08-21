@@ -28,17 +28,18 @@ models:
         type: uuid?
         attributes: ["@exclude_from_foreign_key_check"]
         description: "Item this template inspects (optional; NULL = generic) # logical FK to catalog.Product.id"
-      is_active:
-        type: boolean
-        attributes: ["@default(true)"]
-        description: "Whether new inspections can use this template"
+      # replaces is_active (boolean flipped to lifecycle enum)
+      status:
+        type: QualityInspectionTemplateStatus
+        attributes: ["@default(active)"]
+        description: "Lifecycle (inactive templates are refused for new inspections; completed inspections keep their snapshot)"
       metadata:
         type: Metadata
         attributes: ["@audit_metadata"]
         description: "Audit metadata"
     indexes:
       - type: index
-        fields: [company_id, is_active]
+        fields: [company_id, status]
       - type: index
         fields: [item_id]
 
@@ -85,3 +86,13 @@ models:
     indexes:
       - type: index
         fields: [template_id]
+
+enums:
+  - name: QualityInspectionTemplateStatus
+    description: "Lifecycle of a quality inspection template"
+    variants:
+      - name: active
+        description: "New inspections can use this template"
+        default: true
+      - name: inactive
+        description: "Retired; refused for new inspections, completed inspections keep their snapshot"
