@@ -58,3 +58,13 @@ user_owned:
 
   # Hand-authored module documentation.
   - "docs/**"
+
+  # Hand-authored migrations (fence, outbox, lifecycle) that are not schema-derived.
+  # These carry RLS, outbox wiring, and status lifecycle logic that must not be regenerated.
+  - "migrations/20260712000100_quality_outbox.up.sql"
+  - "migrations/20260722000100_fence_child_company_rls.up.sql"
+  - "migrations/20260722000100_fence_child_company_rls.down.sql"
+  - "migrations/20260726100000_fence_outbox_company_id.up.sql"
+  - "migrations/20260726100000_fence_outbox_company_id.down.sql"
+  - "migrations/20260821130000_status_lifecycle.up.sql"
+  - "migrations/20260821130000_status_lifecycle.down.sql"
