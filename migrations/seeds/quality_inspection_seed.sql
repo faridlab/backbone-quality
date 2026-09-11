@@ -6,7 +6,6 @@
 
 -- INSERT INTO quality.quality_inspections (
 --     id,
---     company_id,
 --     template_id,
 --     item_id,
 --     inspection_type,

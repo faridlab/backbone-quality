@@ -7,13 +7,20 @@
 //!
 //! Thin newtype over `backbone_orm::GenericCrudRepository<QualityAction, backbone_orm::SoftDelete>`.
 //! All standard CRUD methods are available via `Deref`.
+//!
+//! The module carries no tenancy of its own (ADR-0029): statements are tenant-agnostic and ride the
+//! composing service's ambient org scope.
 
-use anyhow::Result;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use backbone_orm::company_scope;
+use backbone_orm::org_scope;
+// The scalar read twin lives only in the legacy `company_scope` module. Its connection
+// discipline is what this repository needs — request-dedicated connection when the composing
+// service bound one, plain pool otherwise. The helper's legacy task-local branch is never
+// taken: this module sets no legacy scope of its own (ADR-0029).
+use backbone_orm::company_scope::fetch_optional_scalar_scoped;
 
 use crate::domain::entity::QualityAction;
 
@@ -43,8 +50,7 @@ impl QualityActionRepository {
 /// The exact row a CAPA action writes.
 ///
 /// Mirrors the raw column shape rather than the `QualityAction` entity: `action_type` is carried as a
-/// free string and cast at the DB (`$3::quality_action_type`). Note there is no `company_id` field —
-/// the action's company is derived by sub-SELECT from its non-conformance row (see `insert_action`).
+/// free string and cast at the DB (`$3::quality_action_type`).
 pub struct NewQualityActionRow<'a> {
     pub id: Uuid,
     pub non_conformance_id: Uuid,
@@ -56,12 +62,11 @@ pub struct NewQualityActionRow<'a> {
 
 /// Hand-written QualityAction SQL. Lives here (not in the write service) per the module's 4-layer rule.
 impl QualityActionRepository {
-    /// Insert a CAPA action. The action's `company_id` is derived by sub-SELECT from its non-conformance
-    /// row — the caller has no company argument to pass.
+    /// Insert a CAPA action.
     ///
     /// Takes the CALLER'S connection: this must run under the `FOR UPDATE` lock the caller holds on the
-    /// NC row, so a concurrent close can't slip a fresh action past it. The caller has already bound the
-    /// scope on that connection — don't re-bind here.
+    /// NC row, so a concurrent close can't slip a fresh action past it. The caller has already relayed
+    /// the ambient org scope onto that connection — don't re-bind here.
     pub async fn insert_action(
         &self,
         conn: &mut sqlx::PgConnection,
@@ -69,9 +74,8 @@ impl QualityActionRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO quality.quality_actions
-                 (id, company_id, non_conformance_id, action_type, procedure_id, status, description, due_date)
-               VALUES ($1,(SELECT company_id FROM quality.non_conformances WHERE id=$2),
-                       $2,$3::quality_action_type,$4,'open'::quality_action_status,$5,$6)"#,
+                 (id, non_conformance_id, action_type, procedure_id, status, description, due_date)
+               VALUES ($1,$2,$3::quality_action_type,$4,'open'::quality_action_status,$5,$6)"#,
         )
         .bind(a.id).bind(a.non_conformance_id).bind(a.action_type).bind(a.procedure_id)
         .bind(a.description).bind(a.due_date)
@@ -83,16 +87,16 @@ impl QualityActionRepository {
     /// Mark an action completed (terminal). Returns rows affected (0 = already completed, or not found —
     /// the caller disambiguates with `exists`).
     ///
-    /// ID-only: no company argument. Runs `execute_scoped`, so it rides the REQUEST-dedicated connection
-    /// carrying the caller's `app.company_id` and another tenant's action simply is not updated. A
-    /// non-HTTP caller must wrap this in `with_company_scope(Some(company_id))` or it fails closed.
+    /// ID-only: no tenant argument. Runs `execute_scoped`, so it rides the request-dedicated connection
+    /// when the composing service bound one and another tenant's action simply is not updated; with no
+    /// scope bound it is a plain unfenced execute (ADR-0029).
     pub async fn complete(
         &self,
         pool: &PgPool,
         action_id: Uuid,
         now: DateTime<Utc>,
     ) -> Result<u64, sqlx::Error> {
-        let moved = company_scope::execute_scoped(
+        let moved = org_scope::execute_scoped(
             pool,
             sqlx::query(
                 r#"UPDATE quality.quality_actions
@@ -106,9 +110,9 @@ impl QualityActionRepository {
     }
 
     /// Does this action exist in scope? Disambiguates "already completed" (an idempotent no-op) from
-    /// "not found" after a 0-row `complete`. ID-only read, same fencing as `complete`.
+    /// "not found" after a 0-row `complete`. ID-only read, same request-scope discipline as `complete`.
     pub async fn exists(&self, pool: &PgPool, action_id: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
-        company_scope::fetch_optional_scalar_scoped(
+        fetch_optional_scalar_scoped(
             pool,
             sqlx::query_scalar("SELECT id FROM quality.quality_actions WHERE id=$1").bind(action_id),
         )

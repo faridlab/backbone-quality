@@ -6,7 +6,6 @@
 
 -- INSERT INTO quality.non_conformances (
 --     id,
---     company_id,
 --     subject,
 --     source_inspection_id,
 --     item_id,

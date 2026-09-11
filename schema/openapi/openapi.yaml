@@ -2595,7 +2595,6 @@ components:
       type: object
       required:
         - id
-        - company_id
         - subject
         - severity
         - status
@@ -2603,9 +2602,6 @@ components:
         - metadata
       properties:
         id:
-          type: string
-          format: uuid
-        company_id:
           type: string
           format: uuid
         subject:
@@ -2653,16 +2649,12 @@ components:
     CreateNonConformanceRequest:
       type: object
       required:
-        - company_id
         - subject
         - severity
         - status
         - opened_at
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         subject:
           type: string
           maxLength: 200
@@ -2695,16 +2687,12 @@ components:
     UpdateNonConformanceRequest:
       type: object
       required:
-        - company_id
         - subject
         - severity
         - status
         - opened_at
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         subject:
           type: string
           maxLength: 200
@@ -2737,9 +2725,6 @@ components:
     PatchNonConformanceRequest:
       type: object
       properties:
-        company_id:
-          type: string
-          format: uuid
         subject:
           type: string
           maxLength: 200
@@ -2783,7 +2768,6 @@ components:
       type: object
       required:
         - id
-        - company_id
         - non_conformance_id
         - action_type
         - status
@@ -2791,9 +2775,6 @@ components:
         - metadata
       properties:
         id:
-          type: string
-          format: uuid
-        company_id:
           type: string
           format: uuid
         non_conformance_id:
@@ -2837,16 +2818,12 @@ components:
     CreateQualityActionRequest:
       type: object
       required:
-        - company_id
         - non_conformance_id
         - action_type
         - status
         - description
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         non_conformance_id:
           type: string
           format: uuid
@@ -2875,16 +2852,12 @@ components:
     UpdateQualityActionRequest:
       type: object
       required:
-        - company_id
         - non_conformance_id
         - action_type
         - status
         - description
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         non_conformance_id:
           type: string
           format: uuid
@@ -2913,9 +2886,6 @@ components:
     PatchQualityActionRequest:
       type: object
       properties:
-        company_id:
-          type: string
-          format: uuid
         non_conformance_id:
           type: string
           format: uuid
@@ -2955,7 +2925,6 @@ components:
       type: object
       required:
         - id
-        - company_id
         - item_id
         - inspection_type
         - sample_size
@@ -2964,9 +2933,6 @@ components:
         - metadata
       properties:
         id:
-          type: string
-          format: uuid
-        company_id:
           type: string
           format: uuid
         template_id:
@@ -3017,7 +2983,6 @@ components:
     CreateQualityInspectionRequest:
       type: object
       required:
-        - company_id
         - item_id
         - inspection_type
         - sample_size
@@ -3025,9 +2990,6 @@ components:
         - status
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_id:
           nullable: true
           type: string
@@ -3063,7 +3025,6 @@ components:
     UpdateQualityInspectionRequest:
       type: object
       required:
-        - company_id
         - item_id
         - inspection_type
         - sample_size
@@ -3071,9 +3032,6 @@ components:
         - status
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_id:
           nullable: true
           type: string
@@ -3109,9 +3067,6 @@ components:
     PatchQualityInspectionRequest:
       type: object
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_id:
           nullable: true
           type: string
@@ -3158,7 +3113,6 @@ components:
       type: object
       required:
         - id
-        - company_id
         - inspection_id
         - parameter_name
         - numeric
@@ -3166,9 +3120,6 @@ components:
         - metadata
       properties:
         id:
-          type: string
-          format: uuid
-        company_id:
           type: string
           format: uuid
         inspection_id:
@@ -3216,16 +3167,12 @@ components:
     CreateQualityInspectionReadingRequest:
       type: object
       required:
-        - company_id
         - inspection_id
         - parameter_name
         - numeric
         - result
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         inspection_id:
           type: string
           format: uuid
@@ -3258,16 +3205,12 @@ components:
     UpdateQualityInspectionReadingRequest:
       type: object
       required:
-        - company_id
         - inspection_id
         - parameter_name
         - numeric
         - result
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         inspection_id:
           type: string
           format: uuid
@@ -3300,9 +3243,6 @@ components:
     PatchQualityInspectionReadingRequest:
       type: object
       properties:
-        company_id:
-          type: string
-          format: uuid
         inspection_id:
           type: string
           format: uuid
@@ -3346,15 +3286,11 @@ components:
       type: object
       required:
         - id
-        - company_id
         - template_name
         - status
         - metadata
       properties:
         id:
-          type: string
-          format: uuid
-        company_id:
           type: string
           format: uuid
         template_name:
@@ -3385,14 +3321,10 @@ components:
     CreateQualityInspectionTemplateRequest:
       type: object
       required:
-        - company_id
         - template_name
         - status
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_name:
           type: string
           maxLength: 140
@@ -3408,14 +3340,10 @@ components:
     UpdateQualityInspectionTemplateRequest:
       type: object
       required:
-        - company_id
         - template_name
         - status
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_name:
           type: string
           maxLength: 140
@@ -3431,9 +3359,6 @@ components:
     PatchQualityInspectionTemplateRequest:
       type: object
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_name:
           type: string
           maxLength: 140
@@ -3460,16 +3385,12 @@ components:
       type: object
       required:
         - id
-        - company_id
         - template_id
         - parameter_name
         - numeric
         - metadata
       properties:
         id:
-          type: string
-          format: uuid
-        company_id:
           type: string
           format: uuid
         template_id:
@@ -3509,15 +3430,11 @@ components:
     CreateQualityInspectionParameterRequest:
       type: object
       required:
-        - company_id
         - template_id
         - parameter_name
         - numeric
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_id:
           type: string
           format: uuid
@@ -3542,15 +3459,11 @@ components:
     UpdateQualityInspectionParameterRequest:
       type: object
       required:
-        - company_id
         - template_id
         - parameter_name
         - numeric
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_id:
           type: string
           format: uuid
@@ -3575,9 +3488,6 @@ components:
     PatchQualityInspectionParameterRequest:
       type: object
       properties:
-        company_id:
-          type: string
-          format: uuid
         template_id:
           type: string
           format: uuid
@@ -3613,15 +3523,11 @@ components:
       type: object
       required:
         - id
-        - company_id
         - procedure_name
         - status
         - metadata
       properties:
         id:
-          type: string
-          format: uuid
-        company_id:
           type: string
           format: uuid
         procedure_name:
@@ -3656,14 +3562,10 @@ components:
     CreateQualityProcedureRequest:
       type: object
       required:
-        - company_id
         - procedure_name
         - status
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         procedure_name:
           type: string
           maxLength: 200
@@ -3683,14 +3585,10 @@ components:
     UpdateQualityProcedureRequest:
       type: object
       required:
-        - company_id
         - procedure_name
         - status
         - metadata
       properties:
-        company_id:
-          type: string
-          format: uuid
         procedure_name:
           type: string
           maxLength: 200
@@ -3710,9 +3608,6 @@ components:
     PatchQualityProcedureRequest:
       type: object
       properties:
-        company_id:
-          type: string
-          format: uuid
         procedure_name:
           type: string
           maxLength: 200

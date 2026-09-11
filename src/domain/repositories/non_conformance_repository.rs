@@ -44,7 +44,6 @@ pub struct NonConformancePaginatedResult {
 /// Filter parameters for list queries
 #[derive(Debug, Clone, Default)]
 pub struct NonConformanceFilter {
-    pub company_id: Option<Uuid>,
     pub subject: Option<String>,
     pub source_inspection_id: Option<Uuid>,
     pub item_id: Option<Uuid>,
@@ -56,7 +55,7 @@ pub struct NonConformanceFilter {
 impl NonConformanceFilter {
     /// Check if any filter is set
     pub fn has_filters(&self) -> bool {
-        self.company_id.is_some() || self.subject.is_some() || self.source_inspection_id.is_some() || self.item_id.is_some() || self.severity.is_some() || self.status.is_some() || self.description.is_some()
+        self.subject.is_some() || self.source_inspection_id.is_some() || self.item_id.is_some() || self.severity.is_some() || self.status.is_some() || self.description.is_some()
     }
 }
 

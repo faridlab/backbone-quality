@@ -44,7 +44,6 @@ pub struct QualityActionPaginatedResult {
 /// Filter parameters for list queries
 #[derive(Debug, Clone, Default)]
 pub struct QualityActionFilter {
-    pub company_id: Option<Uuid>,
     pub non_conformance_id: Option<Uuid>,
     pub action_type: Option<QualityActionType>,
     pub procedure_id: Option<Uuid>,
@@ -55,7 +54,7 @@ pub struct QualityActionFilter {
 impl QualityActionFilter {
     /// Check if any filter is set
     pub fn has_filters(&self) -> bool {
-        self.company_id.is_some() || self.non_conformance_id.is_some() || self.action_type.is_some() || self.procedure_id.is_some() || self.status.is_some() || self.description.is_some()
+        self.non_conformance_id.is_some() || self.action_type.is_some() || self.procedure_id.is_some() || self.status.is_some() || self.description.is_some()
     }
 }
 

@@ -51,7 +51,6 @@ impl std::ops::Deref for QualityInspectionId {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct QualityInspection {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub template_id: Option<Uuid>,
     pub item_id: Uuid,
     pub inspection_type: InspectionType,
@@ -73,10 +72,9 @@ impl QualityInspection {
     }
 
     /// Create a new QualityInspection with required fields
-    pub fn new(company_id: Uuid, item_id: Uuid, inspection_type: InspectionType, sample_size: i32, inspected_at: DateTime<Utc>, status: InspectionStatus) -> Self {
+    pub fn new(item_id: Uuid, inspection_type: InspectionType, sample_size: i32, inspected_at: DateTime<Utc>, status: InspectionStatus) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id,
             template_id: None,
             item_id,
             inspection_type,
@@ -182,9 +180,6 @@ impl QualityInspection {
     pub fn apply_patch(&mut self, fields: std::collections::HashMap<String, serde_json::Value>) {
         for (key, value) in fields {
             match key.as_str() {
-                "company_id" => {
-                    if let Ok(v) = serde_json::from_value(value) { self.company_id = v; }
-                }
                 "template_id" => {
                     if let Ok(v) = serde_json::from_value(value) { self.template_id = v; }
                 }
@@ -266,7 +261,6 @@ impl backbone_orm::EntityRepoMeta for QualityInspection {
     fn column_types() -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
         m.insert("id".to_string(), "uuid".to_string());
-        m.insert("company_id".to_string(), "uuid".to_string());
         m.insert("template_id".to_string(), "uuid".to_string());
         m.insert("item_id".to_string(), "uuid".to_string());
         m.insert("source_id".to_string(), "uuid".to_string());
@@ -277,9 +271,6 @@ impl backbone_orm::EntityRepoMeta for QualityInspection {
     fn search_fields() -> &'static [&'static str] {
         &[]
     }
-    fn company_field() -> Option<&'static str> {
-        Some("company_id")
-    }
 }
 
 /// Builder for QualityInspection entity
@@ -288,7 +279,6 @@ impl backbone_orm::EntityRepoMeta for QualityInspection {
 /// System fields (id, metadata, timestamps) are auto-initialized.
 #[derive(Debug, Clone, Default)]
 pub struct QualityInspectionBuilder {
-    company_id: Option<Uuid>,
     template_id: Option<Uuid>,
     item_id: Option<Uuid>,
     inspection_type: Option<InspectionType>,
@@ -301,12 +291,6 @@ pub struct QualityInspectionBuilder {
 }
 
 impl QualityInspectionBuilder {
-    /// Set the company_id field (required)
-    pub fn company_id(mut self, value: Uuid) -> Self {
-        self.company_id = Some(value);
-        self
-    }
-
     /// Set the template_id field (optional)
     pub fn template_id(mut self, value: Uuid) -> Self {
         self.template_id = Some(value);
@@ -365,13 +349,11 @@ impl QualityInspectionBuilder {
     ///
     /// Returns Err if any required field without a default is missing.
     pub fn build(self) -> Result<QualityInspection, String> {
-        let company_id = self.company_id.ok_or_else(|| "company_id is required".to_string())?;
         let item_id = self.item_id.ok_or_else(|| "item_id is required".to_string())?;
         let inspected_at = self.inspected_at.ok_or_else(|| "inspected_at is required".to_string())?;
 
         Ok(QualityInspection {
             id: Uuid::new_v4(),
-            company_id,
             template_id: self.template_id,
             item_id,
             inspection_type: self.inspection_type.unwrap_or_default(),

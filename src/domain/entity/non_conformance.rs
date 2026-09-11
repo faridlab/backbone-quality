@@ -51,7 +51,6 @@ impl std::ops::Deref for NonConformanceId {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct NonConformance {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub subject: String,
     pub source_inspection_id: Option<Uuid>,
     pub item_id: Option<Uuid>,
@@ -72,10 +71,9 @@ impl NonConformance {
     }
 
     /// Create a new NonConformance with required fields
-    pub fn new(company_id: Uuid, subject: String, severity: NonConformanceSeverity, status: NonConformanceStatus, opened_at: DateTime<Utc>) -> Self {
+    pub fn new(subject: String, severity: NonConformanceSeverity, status: NonConformanceStatus, opened_at: DateTime<Utc>) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id,
             subject,
             source_inspection_id: None,
             item_id: None,
@@ -180,9 +178,6 @@ impl NonConformance {
     pub fn apply_patch(&mut self, fields: std::collections::HashMap<String, serde_json::Value>) {
         for (key, value) in fields {
             match key.as_str() {
-                "company_id" => {
-                    if let Ok(v) = serde_json::from_value(value) { self.company_id = v; }
-                }
                 "subject" => {
                     if let Ok(v) = serde_json::from_value(value) { self.subject = v; }
                 }
@@ -261,7 +256,6 @@ impl backbone_orm::EntityRepoMeta for NonConformance {
     fn column_types() -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
         m.insert("id".to_string(), "uuid".to_string());
-        m.insert("company_id".to_string(), "uuid".to_string());
         m.insert("source_inspection_id".to_string(), "uuid".to_string());
         m.insert("item_id".to_string(), "uuid".to_string());
         m.insert("severity".to_string(), "non_conformance_severity".to_string());
@@ -271,9 +265,6 @@ impl backbone_orm::EntityRepoMeta for NonConformance {
     fn search_fields() -> &'static [&'static str] {
         &["subject"]
     }
-    fn company_field() -> Option<&'static str> {
-        Some("company_id")
-    }
 }
 
 /// Builder for NonConformance entity
@@ -282,7 +273,6 @@ impl backbone_orm::EntityRepoMeta for NonConformance {
 /// System fields (id, metadata, timestamps) are auto-initialized.
 #[derive(Debug, Clone, Default)]
 pub struct NonConformanceBuilder {
-    company_id: Option<Uuid>,
     subject: Option<String>,
     source_inspection_id: Option<Uuid>,
     item_id: Option<Uuid>,
@@ -294,12 +284,6 @@ pub struct NonConformanceBuilder {
 }
 
 impl NonConformanceBuilder {
-    /// Set the company_id field (required)
-    pub fn company_id(mut self, value: Uuid) -> Self {
-        self.company_id = Some(value);
-        self
-    }
-
     /// Set the subject field (required)
     pub fn subject(mut self, value: String) -> Self {
         self.subject = Some(value);
@@ -352,13 +336,11 @@ impl NonConformanceBuilder {
     ///
     /// Returns Err if any required field without a default is missing.
     pub fn build(self) -> Result<NonConformance, String> {
-        let company_id = self.company_id.ok_or_else(|| "company_id is required".to_string())?;
         let subject = self.subject.ok_or_else(|| "subject is required".to_string())?;
         let opened_at = self.opened_at.ok_or_else(|| "opened_at is required".to_string())?;
 
         Ok(NonConformance {
             id: Uuid::new_v4(),
-            company_id,
             subject,
             source_inspection_id: self.source_inspection_id,
             item_id: self.item_id,

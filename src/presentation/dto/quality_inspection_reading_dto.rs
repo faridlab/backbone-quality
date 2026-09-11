@@ -35,9 +35,6 @@ use crate::domain::entity::ReadingResult;
 #[serde(rename_all = "camelCase")]
 pub struct CreateQualityInspectionReadingDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "inspection_id")]
     pub inspection_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 140)))]
@@ -73,9 +70,6 @@ pub struct CreateQualityInspectionReadingDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateQualityInspectionReadingDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "inspection_id")]
     pub inspection_id: Uuid,
@@ -113,9 +107,6 @@ pub struct UpdateQualityInspectionReadingDto {
 #[serde(rename_all = "camelCase")]
 pub struct PatchQualityInspectionReadingDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "company_id")]
-    pub company_id: Option<Uuid>,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "inspection_id")]
     pub inspection_id: Option<Uuid>,
     #[cfg_attr(feature = "validation", validate(length(max = 140)))]
@@ -143,7 +134,7 @@ pub struct PatchQualityInspectionReadingDto {
 impl PatchQualityInspectionReadingDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.inspection_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.reading_value.is_some() || self.min_value.is_some() || self.max_value.is_some() || self.manual_result.is_some() || self.result.is_some() || self.remarks.is_some()
+        self.inspection_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.reading_value.is_some() || self.min_value.is_some() || self.max_value.is_some() || self.manual_result.is_some() || self.result.is_some() || self.remarks.is_some()
     }
 }
 
@@ -161,8 +152,6 @@ impl PatchQualityInspectionReadingDto {
 pub struct QualityInspectionReadingResponseDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub inspection_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
@@ -232,9 +221,9 @@ impl QualityInspectionReadingListResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct QualityInspectionReadingSummaryDto {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub inspection_id: Uuid,
     pub parameter_name: String,
+    pub numeric: bool,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -246,7 +235,6 @@ impl From<QualityInspectionReading> for QualityInspectionReadingResponseDto {
     fn from(entity: QualityInspectionReading) -> Self {
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             inspection_id: entity.inspection_id,
             parameter_name: entity.parameter_name,
             numeric: entity.numeric,
@@ -266,9 +254,9 @@ impl From<QualityInspectionReading> for QualityInspectionReadingSummaryDto {
         let created_at = backbone_core::PersistentEntity::created_at(&entity);
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             inspection_id: entity.inspection_id,
             parameter_name: entity.parameter_name,
+            numeric: entity.numeric,
             created_at,
         }
     }
@@ -278,7 +266,6 @@ impl From<CreateQualityInspectionReadingDto> for QualityInspectionReading {
     fn from(dto: CreateQualityInspectionReadingDto) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id: dto.company_id,
             inspection_id: dto.inspection_id,
             parameter_name: dto.parameter_name,
             numeric: dto.numeric,
@@ -297,7 +284,6 @@ impl From<&QualityInspectionReading> for QualityInspectionReadingResponseDto {
     fn from(entity: &QualityInspectionReading) -> Self {
         Self {
             id: entity.id.clone(),
-            company_id: entity.company_id.clone(),
             inspection_id: entity.inspection_id.clone(),
             parameter_name: entity.parameter_name.clone(),
             numeric: entity.numeric.clone(),
@@ -320,7 +306,6 @@ impl backbone_core::FromCreateDto<CreateQualityInspectionReadingDto> for Quality
 
 impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionReadingDto> for QualityInspectionReading {
     fn apply_update(mut self, dto: UpdateQualityInspectionReadingDto) -> backbone_core::ServiceResult<Self> {
-        self.company_id = dto.company_id;
         self.inspection_id = dto.inspection_id;
         self.parameter_name = dto.parameter_name;
         self.numeric = dto.numeric;

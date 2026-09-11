@@ -23,18 +23,19 @@ async fn qseam1_inspect_a_real_purchase_receipt() {
     let quality = QualityWriteService::new(pool.clone());
     let inventory = backbone_inventory::application::service::inventory_write_service::InventoryWriteService::new(pool.clone());
     let sink = CapturingSink::new();
-    let company = Uuid::new_v4();
     let item = Uuid::new_v4();
+    // backbone-inventory is not yet tenancy-stripped — its receipt still demands a company id.
+    let inventory_company = Uuid::new_v4();
 
     // A REAL inbound Stock document: a purchase receipt (draft) with the item that will be inspected.
     use backbone_inventory::application::service::inventory_write_service::{NewReceipt, ReceiptLine};
     let receipt = inventory.create_purchase_receipt(NewReceipt {
         receipt_number: format!("PR-{}", Uuid::new_v4()),
-        company_id: company, branch_id: None, supplier_id: Uuid::new_v4(), source_po_id: None,
+        company_id: inventory_company, branch_id: None, supplier_id: Uuid::new_v4(), source_po_id: None,
         warehouse_id: Uuid::new_v4(), posting_date: chrono::Utc::now().date_naive(),
         currency: "USD".into(),
         inventory_account_id: Uuid::new_v4(), grir_account_id: Uuid::new_v4(),
-        lines: vec![ReceiptLine { item_id: item, quantity: dec("100"), rate: dec("2500") }],
+        lines: vec![ReceiptLine { item_id: item, quantity: dec("100"), rate: dec("2500"), is_landed_costs_line: false }],
     }).await.unwrap();
 
     // The received item is the item on the receipt line.
@@ -45,12 +46,12 @@ async fn qseam1_inspect_a_real_purchase_receipt() {
 
     // Incoming inspection triggered by (and linked to) the real receipt.
     let tpl = quality.create_template(NewTemplate {
-        company_id: company, template_name: "Incoming QC".into(), item_id: Some(item),
+        template_name: "Incoming QC".into(), item_id: Some(item),
         parameters: vec![NewTemplateParameter { parameter_name: "Moisture".into(), numeric: true,
             min_value: None, max_value: Some(dec("12.0")), spec_text: None }],
     }).await.unwrap();
     let out = quality.inspect(NewInspection {
-        company_id: company, template_id: tpl, item_id: recv_item, inspection_type: "incoming".into(),
+        template_id: tpl, item_id: recv_item, inspection_type: "incoming".into(),
         source_type: Some("purchase_receipt".into()), source_id: Some(receipt), sample_size: 10,
         readings: vec![NewReading { parameter_name: "Moisture".into(), value: Some(dec("9.4")), manual_pass: None, remarks: None }],
     }, dt("2026-07-07T09:00:00Z"), &sink).await.unwrap();

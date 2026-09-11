@@ -33,9 +33,6 @@ use crate::domain::entity::QualityInspectionTemplateStatus;
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct CreateQualityInspectionTemplateDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 140)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(alias = "template_name")]
@@ -58,9 +55,6 @@ pub struct CreateQualityInspectionTemplateDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateQualityInspectionTemplateDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 140)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(alias = "template_name")]
@@ -83,9 +77,6 @@ pub struct UpdateQualityInspectionTemplateDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct PatchQualityInspectionTemplateDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "company_id")]
-    pub company_id: Option<Uuid>,
     #[cfg_attr(feature = "validation", validate(length(max = 140)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "template_name")]
@@ -99,7 +90,7 @@ pub struct PatchQualityInspectionTemplateDto {
 impl PatchQualityInspectionTemplateDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.template_name.is_some() || self.item_id.is_some() || self.status.is_some()
+        self.template_name.is_some() || self.item_id.is_some() || self.status.is_some()
     }
 }
 
@@ -117,8 +108,6 @@ impl PatchQualityInspectionTemplateDto {
 pub struct QualityInspectionTemplateResponseDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub template_name: String,
     pub item_id: Option<Uuid>,
@@ -180,9 +169,9 @@ impl QualityInspectionTemplateListResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct QualityInspectionTemplateSummaryDto {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub template_name: String,
     pub item_id: Option<Uuid>,
+    pub status: QualityInspectionTemplateStatus,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -194,7 +183,6 @@ impl From<QualityInspectionTemplate> for QualityInspectionTemplateResponseDto {
     fn from(entity: QualityInspectionTemplate) -> Self {
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             template_name: entity.template_name,
             item_id: entity.item_id,
             status: entity.status,
@@ -208,9 +196,9 @@ impl From<QualityInspectionTemplate> for QualityInspectionTemplateSummaryDto {
         let created_at = backbone_core::PersistentEntity::created_at(&entity);
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             template_name: entity.template_name,
             item_id: entity.item_id,
+            status: entity.status,
             created_at,
         }
     }
@@ -220,7 +208,6 @@ impl From<CreateQualityInspectionTemplateDto> for QualityInspectionTemplate {
     fn from(dto: CreateQualityInspectionTemplateDto) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id: dto.company_id,
             template_name: dto.template_name,
             item_id: dto.item_id,
             status: dto.status,
@@ -233,7 +220,6 @@ impl From<&QualityInspectionTemplate> for QualityInspectionTemplateResponseDto {
     fn from(entity: &QualityInspectionTemplate) -> Self {
         Self {
             id: entity.id.clone(),
-            company_id: entity.company_id.clone(),
             template_name: entity.template_name.clone(),
             item_id: entity.item_id.clone(),
             status: entity.status.clone(),
@@ -250,7 +236,6 @@ impl backbone_core::FromCreateDto<CreateQualityInspectionTemplateDto> for Qualit
 
 impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionTemplateDto> for QualityInspectionTemplate {
     fn apply_update(mut self, dto: UpdateQualityInspectionTemplateDto) -> backbone_core::ServiceResult<Self> {
-        self.company_id = dto.company_id;
         self.template_name = dto.template_name;
         self.item_id = dto.item_id;
         self.status = dto.status;

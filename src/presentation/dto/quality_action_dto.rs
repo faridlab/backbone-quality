@@ -35,9 +35,6 @@ use crate::domain::entity::QualityActionType;
 #[serde(rename_all = "camelCase")]
 pub struct CreateQualityActionDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "non_conformance_id")]
     pub non_conformance_id: Uuid,
     #[serde(alias = "action_type")]
@@ -67,9 +64,6 @@ pub struct CreateQualityActionDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateQualityActionDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "non_conformance_id")]
     pub non_conformance_id: Uuid,
@@ -101,9 +95,6 @@ pub struct UpdateQualityActionDto {
 #[serde(rename_all = "camelCase")]
 pub struct PatchQualityActionDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "company_id")]
-    pub company_id: Option<Uuid>,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "non_conformance_id")]
     pub non_conformance_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "action_type")]
@@ -125,7 +116,7 @@ pub struct PatchQualityActionDto {
 impl PatchQualityActionDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.non_conformance_id.is_some() || self.action_type.is_some() || self.procedure_id.is_some() || self.status.is_some() || self.description.is_some() || self.due_date.is_some() || self.completed_at.is_some()
+        self.non_conformance_id.is_some() || self.action_type.is_some() || self.procedure_id.is_some() || self.status.is_some() || self.description.is_some() || self.due_date.is_some() || self.completed_at.is_some()
     }
 }
 
@@ -143,8 +134,6 @@ impl PatchQualityActionDto {
 pub struct QualityActionResponseDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub non_conformance_id: Uuid,
     pub action_type: QualityActionType,
@@ -211,9 +200,9 @@ impl QualityActionListResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct QualityActionSummaryDto {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub non_conformance_id: Uuid,
     pub action_type: QualityActionType,
+    pub procedure_id: Option<Uuid>,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -225,7 +214,6 @@ impl From<QualityAction> for QualityActionResponseDto {
     fn from(entity: QualityAction) -> Self {
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             non_conformance_id: entity.non_conformance_id,
             action_type: entity.action_type,
             procedure_id: entity.procedure_id,
@@ -243,9 +231,9 @@ impl From<QualityAction> for QualityActionSummaryDto {
         let created_at = backbone_core::PersistentEntity::created_at(&entity);
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             non_conformance_id: entity.non_conformance_id,
             action_type: entity.action_type,
+            procedure_id: entity.procedure_id,
             created_at,
         }
     }
@@ -255,7 +243,6 @@ impl From<CreateQualityActionDto> for QualityAction {
     fn from(dto: CreateQualityActionDto) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id: dto.company_id,
             non_conformance_id: dto.non_conformance_id,
             action_type: dto.action_type,
             procedure_id: dto.procedure_id,
@@ -272,7 +259,6 @@ impl From<&QualityAction> for QualityActionResponseDto {
     fn from(entity: &QualityAction) -> Self {
         Self {
             id: entity.id.clone(),
-            company_id: entity.company_id.clone(),
             non_conformance_id: entity.non_conformance_id.clone(),
             action_type: entity.action_type.clone(),
             procedure_id: entity.procedure_id.clone(),
@@ -293,7 +279,6 @@ impl backbone_core::FromCreateDto<CreateQualityActionDto> for QualityAction {
 
 impl backbone_core::ApplyUpdateDto<UpdateQualityActionDto> for QualityAction {
     fn apply_update(mut self, dto: UpdateQualityActionDto) -> backbone_core::ServiceResult<Self> {
-        self.company_id = dto.company_id;
         self.non_conformance_id = dto.non_conformance_id;
         self.action_type = dto.action_type;
         self.procedure_id = dto.procedure_id;

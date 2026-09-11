@@ -50,7 +50,6 @@ impl std::ops::Deref for QualityInspectionTemplateId {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct QualityInspectionTemplate {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub template_name: String,
     pub item_id: Option<Uuid>,
     pub status: QualityInspectionTemplateStatus,
@@ -66,10 +65,9 @@ impl QualityInspectionTemplate {
     }
 
     /// Create a new QualityInspectionTemplate with required fields
-    pub fn new(company_id: Uuid, template_name: String, status: QualityInspectionTemplateStatus) -> Self {
+    pub fn new(template_name: String, status: QualityInspectionTemplateStatus) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id,
             template_name,
             item_id: None,
             status,
@@ -151,9 +149,6 @@ impl QualityInspectionTemplate {
     pub fn apply_patch(&mut self, fields: std::collections::HashMap<String, serde_json::Value>) {
         for (key, value) in fields {
             match key.as_str() {
-                "company_id" => {
-                    if let Ok(v) = serde_json::from_value(value) { self.company_id = v; }
-                }
                 "template_name" => {
                     if let Ok(v) = serde_json::from_value(value) { self.template_name = v; }
                 }
@@ -217,16 +212,12 @@ impl backbone_orm::EntityRepoMeta for QualityInspectionTemplate {
     fn column_types() -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
         m.insert("id".to_string(), "uuid".to_string());
-        m.insert("company_id".to_string(), "uuid".to_string());
         m.insert("item_id".to_string(), "uuid".to_string());
         m.insert("status".to_string(), "quality_inspection_template_status".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {
         &["template_name"]
-    }
-    fn company_field() -> Option<&'static str> {
-        Some("company_id")
     }
 }
 
@@ -236,19 +227,12 @@ impl backbone_orm::EntityRepoMeta for QualityInspectionTemplate {
 /// System fields (id, metadata, timestamps) are auto-initialized.
 #[derive(Debug, Clone, Default)]
 pub struct QualityInspectionTemplateBuilder {
-    company_id: Option<Uuid>,
     template_name: Option<String>,
     item_id: Option<Uuid>,
     status: Option<QualityInspectionTemplateStatus>,
 }
 
 impl QualityInspectionTemplateBuilder {
-    /// Set the company_id field (required)
-    pub fn company_id(mut self, value: Uuid) -> Self {
-        self.company_id = Some(value);
-        self
-    }
-
     /// Set the template_name field (required)
     pub fn template_name(mut self, value: String) -> Self {
         self.template_name = Some(value);
@@ -271,12 +255,10 @@ impl QualityInspectionTemplateBuilder {
     ///
     /// Returns Err if any required field without a default is missing.
     pub fn build(self) -> Result<QualityInspectionTemplate, String> {
-        let company_id = self.company_id.ok_or_else(|| "company_id is required".to_string())?;
         let template_name = self.template_name.ok_or_else(|| "template_name is required".to_string())?;
 
         Ok(QualityInspectionTemplate {
             id: Uuid::new_v4(),
-            company_id,
             template_name,
             item_id: self.item_id,
             status: self.status.unwrap_or_default(),

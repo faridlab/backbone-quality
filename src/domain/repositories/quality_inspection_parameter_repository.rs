@@ -44,7 +44,6 @@ pub struct QualityInspectionParameterPaginatedResult {
 /// Filter parameters for list queries
 #[derive(Debug, Clone, Default)]
 pub struct QualityInspectionParameterFilter {
-    pub company_id: Option<Uuid>,
     pub template_id: Option<Uuid>,
     pub parameter_name: Option<String>,
     pub numeric: Option<bool>,
@@ -54,7 +53,7 @@ pub struct QualityInspectionParameterFilter {
 impl QualityInspectionParameterFilter {
     /// Check if any filter is set
     pub fn has_filters(&self) -> bool {
-        self.company_id.is_some() || self.template_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.spec_text.is_some()
+        self.template_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.spec_text.is_some()
     }
 }
 

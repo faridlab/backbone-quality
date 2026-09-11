@@ -51,7 +51,6 @@ impl std::ops::Deref for QualityActionId {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct QualityAction {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub non_conformance_id: Uuid,
     pub action_type: QualityActionType,
     pub procedure_id: Option<Uuid>,
@@ -71,10 +70,9 @@ impl QualityAction {
     }
 
     /// Create a new QualityAction with required fields
-    pub fn new(company_id: Uuid, non_conformance_id: Uuid, action_type: QualityActionType, status: QualityActionStatus, description: String) -> Self {
+    pub fn new(non_conformance_id: Uuid, action_type: QualityActionType, status: QualityActionStatus, description: String) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id,
             non_conformance_id,
             action_type,
             procedure_id: None,
@@ -172,9 +170,6 @@ impl QualityAction {
     pub fn apply_patch(&mut self, fields: std::collections::HashMap<String, serde_json::Value>) {
         for (key, value) in fields {
             match key.as_str() {
-                "company_id" => {
-                    if let Ok(v) = serde_json::from_value(value) { self.company_id = v; }
-                }
                 "non_conformance_id" => {
                     if let Ok(v) = serde_json::from_value(value) { self.non_conformance_id = v; }
                 }
@@ -250,7 +245,6 @@ impl backbone_orm::EntityRepoMeta for QualityAction {
     fn column_types() -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
         m.insert("id".to_string(), "uuid".to_string());
-        m.insert("company_id".to_string(), "uuid".to_string());
         m.insert("non_conformance_id".to_string(), "uuid".to_string());
         m.insert("procedure_id".to_string(), "uuid".to_string());
         m.insert("action_type".to_string(), "quality_action_type".to_string());
@@ -260,9 +254,6 @@ impl backbone_orm::EntityRepoMeta for QualityAction {
     fn search_fields() -> &'static [&'static str] {
         &["description"]
     }
-    fn company_field() -> Option<&'static str> {
-        Some("company_id")
-    }
 }
 
 /// Builder for QualityAction entity
@@ -271,7 +262,6 @@ impl backbone_orm::EntityRepoMeta for QualityAction {
 /// System fields (id, metadata, timestamps) are auto-initialized.
 #[derive(Debug, Clone, Default)]
 pub struct QualityActionBuilder {
-    company_id: Option<Uuid>,
     non_conformance_id: Option<Uuid>,
     action_type: Option<QualityActionType>,
     procedure_id: Option<Uuid>,
@@ -282,12 +272,6 @@ pub struct QualityActionBuilder {
 }
 
 impl QualityActionBuilder {
-    /// Set the company_id field (required)
-    pub fn company_id(mut self, value: Uuid) -> Self {
-        self.company_id = Some(value);
-        self
-    }
-
     /// Set the non_conformance_id field (required)
     pub fn non_conformance_id(mut self, value: Uuid) -> Self {
         self.non_conformance_id = Some(value);
@@ -334,13 +318,11 @@ impl QualityActionBuilder {
     ///
     /// Returns Err if any required field without a default is missing.
     pub fn build(self) -> Result<QualityAction, String> {
-        let company_id = self.company_id.ok_or_else(|| "company_id is required".to_string())?;
         let non_conformance_id = self.non_conformance_id.ok_or_else(|| "non_conformance_id is required".to_string())?;
         let description = self.description.ok_or_else(|| "description is required".to_string())?;
 
         Ok(QualityAction {
             id: Uuid::new_v4(),
-            company_id,
             non_conformance_id,
             action_type: self.action_type.unwrap_or_default(),
             procedure_id: self.procedure_id,

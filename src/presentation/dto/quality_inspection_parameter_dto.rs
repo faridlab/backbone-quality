@@ -34,9 +34,6 @@ use crate::domain::entity::AuditMetadata;
 #[serde(rename_all = "camelCase")]
 pub struct CreateQualityInspectionParameterDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "template_id")]
     pub template_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 140)))]
@@ -67,9 +64,6 @@ pub struct CreateQualityInspectionParameterDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateQualityInspectionParameterDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "template_id")]
     pub template_id: Uuid,
@@ -102,9 +96,6 @@ pub struct UpdateQualityInspectionParameterDto {
 #[serde(rename_all = "camelCase")]
 pub struct PatchQualityInspectionParameterDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "company_id")]
-    pub company_id: Option<Uuid>,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "template_id")]
     pub template_id: Option<Uuid>,
     #[cfg_attr(feature = "validation", validate(length(max = 140)))]
@@ -126,7 +117,7 @@ pub struct PatchQualityInspectionParameterDto {
 impl PatchQualityInspectionParameterDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.template_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.min_value.is_some() || self.max_value.is_some() || self.spec_text.is_some()
+        self.template_id.is_some() || self.parameter_name.is_some() || self.numeric.is_some() || self.min_value.is_some() || self.max_value.is_some() || self.spec_text.is_some()
     }
 }
 
@@ -144,8 +135,6 @@ impl PatchQualityInspectionParameterDto {
 pub struct QualityInspectionParameterResponseDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub template_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
@@ -212,9 +201,9 @@ impl QualityInspectionParameterListResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct QualityInspectionParameterSummaryDto {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub template_id: Uuid,
     pub parameter_name: String,
+    pub numeric: bool,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -226,7 +215,6 @@ impl From<QualityInspectionParameter> for QualityInspectionParameterResponseDto 
     fn from(entity: QualityInspectionParameter) -> Self {
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             template_id: entity.template_id,
             parameter_name: entity.parameter_name,
             numeric: entity.numeric,
@@ -243,9 +231,9 @@ impl From<QualityInspectionParameter> for QualityInspectionParameterSummaryDto {
         let created_at = backbone_core::PersistentEntity::created_at(&entity);
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             template_id: entity.template_id,
             parameter_name: entity.parameter_name,
+            numeric: entity.numeric,
             created_at,
         }
     }
@@ -255,7 +243,6 @@ impl From<CreateQualityInspectionParameterDto> for QualityInspectionParameter {
     fn from(dto: CreateQualityInspectionParameterDto) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id: dto.company_id,
             template_id: dto.template_id,
             parameter_name: dto.parameter_name,
             numeric: dto.numeric,
@@ -271,7 +258,6 @@ impl From<&QualityInspectionParameter> for QualityInspectionParameterResponseDto
     fn from(entity: &QualityInspectionParameter) -> Self {
         Self {
             id: entity.id.clone(),
-            company_id: entity.company_id.clone(),
             template_id: entity.template_id.clone(),
             parameter_name: entity.parameter_name.clone(),
             numeric: entity.numeric.clone(),
@@ -291,7 +277,6 @@ impl backbone_core::FromCreateDto<CreateQualityInspectionParameterDto> for Quali
 
 impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionParameterDto> for QualityInspectionParameter {
     fn apply_update(mut self, dto: UpdateQualityInspectionParameterDto) -> backbone_core::ServiceResult<Self> {
-        self.company_id = dto.company_id;
         self.template_id = dto.template_id;
         self.parameter_name = dto.parameter_name;
         self.numeric = dto.numeric;

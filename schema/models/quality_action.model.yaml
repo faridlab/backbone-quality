@@ -3,6 +3,10 @@
 # Entity: QualityAction (CAPA)
 # Description: A corrective or preventive action taken to resolve a NonConformance, optionally enacting a
 # QualityProcedure. A NonConformance closes only once its actions are completed. Posts NO GL.
+#
+# Tenancy: none, by design (ADR-0029). The module is tenant-agnostic; a composing
+# service's tenancy decorator owns org scoping for this table (via the parent
+# non-conformance row it resolves).
 # =============================================================================
 
 models:
@@ -14,10 +18,6 @@ models:
         type: uuid
         attributes: ["@id", "@default(uuid)"]
         description: "Unique action id"
-      company_id:
-        type: uuid
-        attributes: ["@required", "@exclude_from_foreign_key_check"]
-        description: "Org owner # logical FK to organization.Company.id"
       non_conformance_id:
         type: uuid
         attributes: ["@required", "@foreign_key(NonConformance.id)"]

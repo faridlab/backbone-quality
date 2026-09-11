@@ -7,13 +7,15 @@
 //!
 //! Thin newtype over `backbone_orm::GenericCrudRepository<NonConformance, backbone_orm::SoftDelete>`.
 //! All standard CRUD methods are available via `Deref`.
+//!
+//! The module carries no tenancy of its own (ADR-0029): statements are tenant-agnostic and ride the
+//! composing service's ambient org scope.
 
-use anyhow::Result;
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-use backbone_orm::company_scope;
+use backbone_orm::org_scope;
 
 use crate::domain::entity::NonConformance;
 
@@ -43,11 +45,10 @@ impl NonConformanceRepository {
 /// The exact row a raised non-conformance writes.
 ///
 /// Mirrors the raw column shape rather than the `NonConformance` entity: `severity` is carried as a free
-/// string and cast at the DB (`$6::non_conformance_severity`), so a bad severity fails as a DB error
+/// string and cast at the DB (`$5::non_conformance_severity`), so a bad severity fails as a DB error
 /// rather than a deserialize panic.
 pub struct NewNonConformanceRow<'a> {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub subject: &'a str,
     pub source_inspection_id: Option<Uuid>,
     pub item_id: Option<Uuid>,
@@ -56,10 +57,8 @@ pub struct NewNonConformanceRow<'a> {
     pub opened_at: DateTime<Utc>,
 }
 
-/// The locked NC projection the close decision needs: its company (only knowable AFTER the read) and its
-/// live status.
+/// The locked NC status projection the CAPA gates read.
 pub struct LockedNonConformanceRow {
-    pub company_id: Uuid,
     pub status: String,
 }
 
@@ -67,50 +66,48 @@ pub struct LockedNonConformanceRow {
 impl NonConformanceRepository {
     /// Raise a non-conformance.
     ///
-    /// A write outside any transaction: takes the pool and runs `execute_scoped` so the RLS fence
-    /// (ADR-0008) applies. The caller wraps this in `with_company_scope(Some(company))` — the company is
-    /// on the DTO, and that scope is what satisfies the INSERT's WITH CHECK fence.
+    /// A write outside any transaction: takes the pool and runs `execute_scoped` — under a composer's
+    /// request scope it rides the request-dedicated connection; with no scope bound it is a plain
+    /// unfenced execute (ADR-0029).
     pub async fn insert_non_conformance(
         &self,
         pool: &PgPool,
         nc: &NewNonConformanceRow<'_>,
     ) -> Result<(), sqlx::Error> {
-        company_scope::execute_scoped(
+        org_scope::execute_scoped(
             pool,
             sqlx::query(
                 r#"INSERT INTO quality.non_conformances
-                     (id, company_id, subject, source_inspection_id, item_id, severity, status, description, opened_at)
-                   VALUES ($1,$2,$3,$4,$5,$6::non_conformance_severity,'open'::non_conformance_status,$7,$8)"#,
+                     (id, subject, source_inspection_id, item_id, severity, status, description, opened_at)
+                   VALUES ($1,$2,$3,$4,$5::non_conformance_severity,'open'::non_conformance_status,$6,$7)"#,
             )
-            .bind(nc.id).bind(nc.company_id).bind(nc.subject).bind(nc.source_inspection_id).bind(nc.item_id)
+            .bind(nc.id).bind(nc.subject).bind(nc.source_inspection_id).bind(nc.item_id)
             .bind(nc.severity).bind(nc.description).bind(nc.opened_at),
         )
         .await?;
         Ok(())
     }
 
-    /// Lock the NC row and read its company + status — the gate a concurrent close must serialize
-    /// against, and the company a CAPA action's cited procedure is validated against (ADR-0010 F2).
+    /// Lock the NC row and read its status — the gate a concurrent close must serialize against.
     ///
     /// Takes the CALLER'S connection: the lock must be held across the action insert that follows. The
-    /// caller has already bound the scope on that connection — don't re-bind here.
+    /// caller has already relayed the ambient org scope onto that connection — don't re-bind here.
     pub async fn lock_status(
         &self,
         conn: &mut sqlx::PgConnection,
         nc_id: Uuid,
     ) -> Result<Option<LockedNonConformanceRow>, sqlx::Error> {
         let row = sqlx::query(
-            r#"SELECT company_id, status::text AS status FROM quality.non_conformances
+            r#"SELECT status::text AS status FROM quality.non_conformances
                WHERE id=$1 AND (metadata->>'deleted_at') IS NULL FOR UPDATE"#,
         )
         .bind(nc_id)
         .fetch_optional(conn)
         .await?;
-        Ok(row.map(|r| LockedNonConformanceRow { company_id: r.get("company_id"), status: r.get("status") }))
+        Ok(row.map(|r| LockedNonConformanceRow { status: r.get("status") }))
     }
 
-    /// Lock the NC row and read the company + status the close decision needs. The company is only
-    /// knowable AFTER this read, which is why the caller cannot bind it up front.
+    /// Lock the NC row and read the status the close decision needs.
     ///
     /// Takes the CALLER'S connection: the lock must be held across the completeness check and the close.
     pub async fn lock_for_close(
@@ -119,13 +116,13 @@ impl NonConformanceRepository {
         nc_id: Uuid,
     ) -> Result<Option<LockedNonConformanceRow>, sqlx::Error> {
         let row = sqlx::query(
-            r#"SELECT company_id, status::text AS status FROM quality.non_conformances
+            r#"SELECT status::text AS status FROM quality.non_conformances
                WHERE id=$1 AND (metadata->>'deleted_at') IS NULL FOR UPDATE"#,
         )
         .bind(nc_id)
         .fetch_optional(conn)
         .await?;
-        Ok(row.map(|r| LockedNonConformanceRow { company_id: r.get("company_id"), status: r.get("status") }))
+        Ok(row.map(|r| LockedNonConformanceRow { status: r.get("status") }))
     }
 
     /// Advance an open NC to in_progress (the status filter makes it a no-op once it already is).

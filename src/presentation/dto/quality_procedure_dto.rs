@@ -33,9 +33,6 @@ use crate::domain::entity::QualityProcedureStatus;
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct CreateQualityProcedureDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 200)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(alias = "procedure_name")]
@@ -61,9 +58,6 @@ pub struct CreateQualityProcedureDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateQualityProcedureDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 200)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(alias = "procedure_name")]
@@ -89,9 +83,6 @@ pub struct UpdateQualityProcedureDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct PatchQualityProcedureDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "company_id")]
-    pub company_id: Option<Uuid>,
     #[cfg_attr(feature = "validation", validate(length(max = 200)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "procedure_name")]
@@ -108,7 +99,7 @@ pub struct PatchQualityProcedureDto {
 impl PatchQualityProcedureDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.status.is_some()
+        self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.status.is_some()
     }
 }
 
@@ -126,8 +117,6 @@ impl PatchQualityProcedureDto {
 pub struct QualityProcedureResponseDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub procedure_name: String,
     pub parent_procedure_id: Option<Uuid>,
@@ -190,9 +179,9 @@ impl QualityProcedureListResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct QualityProcedureSummaryDto {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub procedure_name: String,
     pub parent_procedure_id: Option<Uuid>,
+    pub description: Option<String>,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -204,7 +193,6 @@ impl From<QualityProcedure> for QualityProcedureResponseDto {
     fn from(entity: QualityProcedure) -> Self {
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             procedure_name: entity.procedure_name,
             parent_procedure_id: entity.parent_procedure_id,
             description: entity.description,
@@ -219,9 +207,9 @@ impl From<QualityProcedure> for QualityProcedureSummaryDto {
         let created_at = backbone_core::PersistentEntity::created_at(&entity);
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             procedure_name: entity.procedure_name,
             parent_procedure_id: entity.parent_procedure_id,
+            description: entity.description,
             created_at,
         }
     }
@@ -231,7 +219,6 @@ impl From<CreateQualityProcedureDto> for QualityProcedure {
     fn from(dto: CreateQualityProcedureDto) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id: dto.company_id,
             procedure_name: dto.procedure_name,
             parent_procedure_id: dto.parent_procedure_id,
             description: dto.description,
@@ -245,7 +232,6 @@ impl From<&QualityProcedure> for QualityProcedureResponseDto {
     fn from(entity: &QualityProcedure) -> Self {
         Self {
             id: entity.id.clone(),
-            company_id: entity.company_id.clone(),
             procedure_name: entity.procedure_name.clone(),
             parent_procedure_id: entity.parent_procedure_id.clone(),
             description: entity.description.clone(),
@@ -263,7 +249,6 @@ impl backbone_core::FromCreateDto<CreateQualityProcedureDto> for QualityProcedur
 
 impl backbone_core::ApplyUpdateDto<UpdateQualityProcedureDto> for QualityProcedure {
     fn apply_update(mut self, dto: UpdateQualityProcedureDto) -> backbone_core::ServiceResult<Self> {
-        self.company_id = dto.company_id;
         self.procedure_name = dto.procedure_name;
         self.parent_procedure_id = dto.parent_procedure_id;
         self.description = dto.description;

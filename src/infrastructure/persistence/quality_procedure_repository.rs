@@ -7,12 +7,19 @@
 //!
 //! Thin newtype over `backbone_orm::GenericCrudRepository<QualityProcedure, backbone_orm::SoftDelete>`.
 //! All standard CRUD methods are available via `Deref`.
+//!
+//! The module carries no tenancy of its own (ADR-0029): statements are tenant-agnostic and ride the
+//! composing service's ambient org scope.
 
-use anyhow::Result;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use backbone_orm::company_scope;
+use backbone_orm::org_scope;
+// The scalar read twin lives only in the legacy `company_scope` module. Its connection
+// discipline is what this repository needs — request-dedicated connection when the composing
+// service bound one, plain pool otherwise. The helper's legacy task-local branch is never
+// taken: this module sets no legacy scope of its own (ADR-0029).
+use backbone_orm::company_scope::fetch_optional_scalar_scoped;
 
 use crate::domain::entity::QualityProcedure;
 
@@ -44,7 +51,6 @@ impl QualityProcedureRepository {
 /// Mirrors the raw column shape rather than the `QualityProcedure` entity.
 pub struct NewProcedureRow<'a> {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub procedure_name: &'a str,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<&'a str>,
@@ -52,40 +58,35 @@ pub struct NewProcedureRow<'a> {
 
 /// Hand-written QualityProcedure SQL. Lives here (not in the write service) per the module's 4-layer rule.
 impl QualityProcedureRepository {
-    /// Probe that a parent procedure exists in this company — the adjacency-list tree must not cross a
-    /// tenant boundary.
+    /// Probe that a procedure id exists — a parent (or a CAPA-cited) procedure must be visible to the
+    /// caller. ID-only: no tenant argument; under a composed tenancy decorator a foreign tenant's
+    /// procedure reads as absent.
     ///
-    /// A read outside any transaction: takes the pool and runs `fetch_optional_scalar_scoped` so the RLS
-    /// fence (ADR-0008) applies. The caller wraps this in `with_company_scope(Some(company))`. The
-    /// explicit `company_id = $2` filter stays as defense-in-depth.
-    pub async fn find_id_in_company(
-        &self,
-        pool: &PgPool,
-        procedure_id: Uuid,
-        company_id: Uuid,
-    ) -> Result<Option<Uuid>, sqlx::Error> {
-        company_scope::fetch_optional_scalar_scoped(
+    /// A read outside any transaction: takes the pool and runs the scoped read helper, so once the
+    /// decorator is installed the probe rides the request-dedicated connection.
+    pub async fn find_id(&self, pool: &PgPool, procedure_id: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
+        fetch_optional_scalar_scoped(
             pool,
-            sqlx::query_scalar("SELECT id FROM quality.quality_procedures WHERE id=$1 AND company_id=$2")
-                .bind(procedure_id).bind(company_id),
+            sqlx::query_scalar("SELECT id FROM quality.quality_procedures WHERE id=$1")
+                .bind(procedure_id),
         )
         .await
     }
 
     /// Insert a procedure.
     ///
-    /// A write outside any transaction: takes the pool and runs `execute_scoped` so the RLS fence
-    /// applies. The caller wraps this in `with_company_scope(Some(company))` — the company is on the
-    /// DTO, and that scope is what satisfies the INSERT's WITH CHECK fence.
+    /// A write outside any transaction: takes the pool and runs `execute_scoped` — under a composer's
+    /// request scope it rides the request-dedicated connection; with no scope bound it is a plain
+    /// unfenced execute (ADR-0029).
     pub async fn insert_procedure(&self, pool: &PgPool, p: &NewProcedureRow<'_>) -> Result<(), sqlx::Error> {
-        company_scope::execute_scoped(
+        org_scope::execute_scoped(
             pool,
             sqlx::query(
                 r#"INSERT INTO quality.quality_procedures
-                     (id, company_id, procedure_name, parent_procedure_id, description, status)
-                   VALUES ($1,$2,$3,$4,$5,'active')"#,
+                     (id, procedure_name, parent_procedure_id, description, status)
+                   VALUES ($1,$2,$3,$4,'active')"#,
             )
-            .bind(p.id).bind(p.company_id).bind(p.procedure_name).bind(p.parent_procedure_id).bind(p.description),
+            .bind(p.id).bind(p.procedure_name).bind(p.parent_procedure_id).bind(p.description),
         )
         .await?;
         Ok(())

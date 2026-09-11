@@ -5,6 +5,10 @@
 //! accepted/rejected) is the signal Stock subscribes to ("accept into stock / hold"), and the CAPA
 //! lifecycle (`NonConformanceRaised` / `NonConformanceClosed`) is a read-side quality signal. A consuming
 //! service supplies the sink (bus, outbox, …).
+//!
+//! **Tenancy (ADR-0029).** The module keys no statement on a tenant; the `company_id` these
+//! payloads carry is the LEGACY TWIN — the ambient org scope's legacy company id echoed for
+//! still-company-fenced consumers (until those strip too), nil when no scope is bound.
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -19,6 +23,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct QualityInspectionCompleted {
     pub inspection_id: Uuid,
+    /// Legacy tenant twin (ADR-0029) for unstripped consumers — see the module docs.
     pub company_id: Uuid,
     pub item_id: Uuid,
     pub inspection_type: String,
@@ -31,6 +36,7 @@ pub struct QualityInspectionCompleted {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct NonConformanceRaised {
     pub non_conformance_id: Uuid,
+    /// Legacy tenant twin (ADR-0029) for unstripped consumers — see the module docs.
     pub company_id: Uuid,
     pub source_inspection_id: Option<Uuid>,
     pub severity: String,
@@ -40,6 +46,7 @@ pub struct NonConformanceRaised {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct NonConformanceClosed {
     pub non_conformance_id: Uuid,
+    /// Legacy tenant twin (ADR-0029) for unstripped consumers — see the module docs.
     pub company_id: Uuid,
 }
 

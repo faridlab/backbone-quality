@@ -1,6 +1,6 @@
 [package]
 name = "backbone-quality"
-version = "0.5.8"
+version = "0.6.0"
 edition = "2021"
 description = "Minimal Backbone Framework module skeleton"
 
@@ -8,7 +8,7 @@ description = "Minimal Backbone Framework module skeleton"
 path = "src/lib.rs"
 
 [dependencies]
-backbone-outbox = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.17", features = ["multi_tenant"] }
+backbone-outbox = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.17" }
 # -----------------------------------------------------------------------------
 # Backbone Framework crates
 #

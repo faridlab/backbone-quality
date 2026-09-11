@@ -7,13 +7,19 @@
 //!
 //! Thin newtype over `backbone_orm::GenericCrudRepository<QualityInspection, backbone_orm::SoftDelete>`.
 //! All standard CRUD methods are available via `Deref`.
+//!
+//! The module carries no tenancy of its own (ADR-0029): statements are tenant-agnostic and ride the
+//! composing service's ambient org scope.
 
-use anyhow::Result;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use backbone_orm::company_scope;
+// The scalar read twin lives only in the legacy `company_scope` module. Its connection
+// discipline is what this repository needs — request-dedicated connection when the composing
+// service bound one, plain pool otherwise. The helper's legacy task-local branch is never
+// taken: this module sets no legacy scope of its own (ADR-0029).
+use backbone_orm::company_scope::fetch_optional_scalar_scoped;
 
 use crate::domain::entity::QualityInspection;
 
@@ -43,12 +49,11 @@ impl QualityInspectionRepository {
 /// The exact row a completed inspection writes.
 ///
 /// Mirrors the raw column shape rather than the `QualityInspection` entity: `inspection_type` and
-/// `status` are carried as free strings and cast at the DB (`$5::inspection_type`,
-/// `$10::inspection_status`), so a bad value fails as a DB error rather than a deserialize panic. The
+/// `status` are carried as free strings and cast at the DB (`$4::inspection_type`,
+/// `$8::inspection_status`), so a bad value fails as a DB error rather than a deserialize panic. The
 /// verdict (`status`) is already judged by the caller — the SQL does not decide it.
 pub struct NewInspectionRow<'a> {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub template_id: Uuid,
     pub item_id: Uuid,
     pub inspection_type: &'a str,
@@ -65,7 +70,8 @@ impl QualityInspectionRepository {
     ///
     /// Takes the CALLER'S connection so the header, its readings, and the outbox stage commit as one
     /// unit — Stock subscribes to the disposition, so a crash between commit and the in-proc publish
-    /// must not drop it. The caller binds the company on that connection — don't re-bind here.
+    /// must not drop it. The caller has already relayed the ambient org scope onto that connection
+    /// (`relay_ambient_scope`) — don't re-bind here.
     pub async fn insert_inspection(
         &self,
         conn: &mut sqlx::PgConnection,
@@ -73,11 +79,11 @@ impl QualityInspectionRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO quality.quality_inspections
-                 (id, company_id, template_id, item_id, inspection_type, source_type, source_id,
+                 (id, template_id, item_id, inspection_type, source_type, source_id,
                   sample_size, inspected_at, status, remarks)
-               VALUES ($1,$2,$3,$4,$5::inspection_type,$6,$7,$8,$9,$10::inspection_status,NULL)"#,
+               VALUES ($1,$2,$3,$4::inspection_type,$5,$6,$7,$8,$9::inspection_status,NULL)"#,
         )
-        .bind(i.id).bind(i.company_id).bind(i.template_id).bind(i.item_id).bind(i.inspection_type)
+        .bind(i.id).bind(i.template_id).bind(i.item_id).bind(i.inspection_type)
         .bind(i.source_type).bind(i.source_id).bind(i.sample_size).bind(i.inspected_at).bind(i.status)
         .execute(conn)
         .await?;
@@ -86,11 +92,12 @@ impl QualityInspectionRepository {
 
     /// An inspection's verdict, as text. `Ok(None)` = not visible in the caller's scope.
     ///
-    /// A read outside any transaction: takes the pool and runs `fetch_optional_scalar_scoped` so the RLS
-    /// fence (ADR-0008) applies. The caller wraps this in `with_company_scope(Some(company))` — a cited
-    /// inspection must be visible in THAT company or it reads as not found.
+    /// ID-only: no tenant argument. The scoped read helper rides the request-dedicated connection when
+    /// the composing service bound one (carrying the decorator's fence variables), plainly on the pool
+    /// otherwise — a cited inspection must be visible in the caller's scope or it reads as not found
+    /// (ADR-0029).
     pub async fn find_status(&self, pool: &PgPool, inspection_id: Uuid) -> Result<Option<String>, sqlx::Error> {
-        company_scope::fetch_optional_scalar_scoped(
+        fetch_optional_scalar_scoped(
             pool,
             sqlx::query_scalar(
                 "SELECT status::text FROM quality.quality_inspections WHERE id=$1 AND (metadata->>'deleted_at') IS NULL")

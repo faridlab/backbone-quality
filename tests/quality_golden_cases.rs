@@ -12,9 +12,9 @@ use common::*;
 use uuid::Uuid;
 
 /// A template: numeric Diameter in [9.5, 10.5] + a non-numeric Color (manual pass/fail).
-async fn diameter_color_template(svc: &QualityWriteService, company: Uuid, item: Uuid) -> Uuid {
+async fn diameter_color_template(svc: &QualityWriteService, item: Uuid) -> Uuid {
     svc.create_template(NewTemplate {
-        company_id: company, template_name: "Widget QC".into(), item_id: Some(item),
+        template_name: "Widget QC".into(), item_id: Some(item),
         parameters: vec![
             NewTemplateParameter { parameter_name: "Diameter".into(), numeric: true,
                 min_value: Some(dec("9.5")), max_value: Some(dec("10.5")), spec_text: None },
@@ -30,11 +30,11 @@ async fn qgc1_all_in_spec_accepted() {
     let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = CapturingSink::new();
-    let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
-    let tpl = diameter_color_template(&svc, company, item).await;
+    let item = Uuid::new_v4();
+    let tpl = diameter_color_template(&svc, item).await;
 
     let out = svc.inspect(NewInspection {
-        company_id: company, template_id: tpl, item_id: item, inspection_type: "incoming".into(),
+        template_id: tpl, item_id: item, inspection_type: "incoming".into(),
         source_type: None, source_id: None, sample_size: 5,
         readings: vec![
             NewReading { parameter_name: "Diameter".into(), value: Some(dec("10.0")), manual_pass: None, remarks: None },
@@ -56,11 +56,11 @@ async fn qgc2_out_of_spec_rejected() {
     let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = CapturingSink::new();
-    let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
-    let tpl = diameter_color_template(&svc, company, item).await;
+    let item = Uuid::new_v4();
+    let tpl = diameter_color_template(&svc, item).await;
 
     let out = svc.inspect(NewInspection {
-        company_id: company, template_id: tpl, item_id: item, inspection_type: "incoming".into(),
+        template_id: tpl, item_id: item, inspection_type: "incoming".into(),
         source_type: None, source_id: None, sample_size: 5,
         readings: vec![
             NewReading { parameter_name: "Diameter".into(), value: Some(dec("11.2")), manual_pass: None, remarks: None }, // > 10.5
@@ -86,10 +86,10 @@ async fn qgc3_nc_capa_close_flow() {
     let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = CapturingSink::new();
-    let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
-    let tpl = diameter_color_template(&svc, company, item).await;
+    let item = Uuid::new_v4();
+    let tpl = diameter_color_template(&svc, item).await;
     let out = svc.inspect(NewInspection {
-        company_id: company, template_id: tpl, item_id: item, inspection_type: "incoming".into(),
+        template_id: tpl, item_id: item, inspection_type: "incoming".into(),
         source_type: None, source_id: None, sample_size: 1,
         readings: vec![
             NewReading { parameter_name: "Diameter".into(), value: Some(dec("8.0")), manual_pass: None, remarks: None }, // < 9.5
@@ -99,22 +99,22 @@ async fn qgc3_nc_capa_close_flow() {
     assert!(!out.accepted);
 
     let nc = svc.raise_non_conformance(NewNonConformance {
-        company_id: company, subject: "Undersized widgets".into(), source_inspection_id: Some(out.inspection_id),
+        subject: "Undersized widgets".into(), source_inspection_id: Some(out.inspection_id),
         item_id: Some(item), severity: "high".into(), description: None,
     }, dt("2026-07-07T09:05:00Z"), &sink).await.unwrap();
-    let action = svc.add_quality_action(company, NewQualityAction {
+    let action = svc.add_quality_action(NewQualityAction {
         non_conformance_id: nc, action_type: "corrective".into(), procedure_id: None,
         description: "Re-calibrate the lathe".into(), due_date: None,
     }).await.unwrap();
 
     // Can't close while the action is open.
-    assert!(matches!(svc.close_non_conformance(company, nc, dt("2026-07-07T10:00:00Z"), &sink).await, Err(QualityError::InvalidState(_))));
+    assert!(matches!(svc.close_non_conformance(nc, dt("2026-07-07T10:00:00Z"), &sink).await, Err(QualityError::InvalidState(_))));
     let st: String = sqlx::query_scalar("SELECT status::text FROM quality.non_conformances WHERE id=$1")
         .bind(nc).fetch_one(&pool).await.unwrap();
     assert_eq!(st, "in_progress", "adding an action advances the NC");
 
-    svc.complete_action(company, action, dt("2026-07-07T11:00:00Z")).await.unwrap();
-    svc.close_non_conformance(company, nc, dt("2026-07-07T12:00:00Z"), &sink).await.unwrap();
+    svc.complete_action(action, dt("2026-07-07T11:00:00Z")).await.unwrap();
+    svc.close_non_conformance(nc, dt("2026-07-07T12:00:00Z"), &sink).await.unwrap();
     let st2: String = sqlx::query_scalar("SELECT status::text FROM quality.non_conformances WHERE id=$1")
         .bind(nc).fetch_one(&pool).await.unwrap();
     assert_eq!(st2, "closed");
@@ -126,29 +126,29 @@ async fn qgc4_validation() {
     let Some(pool) = pool().await else { return; };
     let svc = QualityWriteService::new(pool.clone());
     let sink = LoggingSink;
-    let (company, item) = (Uuid::new_v4(), Uuid::new_v4());
+    let item = Uuid::new_v4();
 
     let no_param = svc.create_template(NewTemplate {
-        company_id: company, template_name: "X".into(), item_id: None, parameters: vec![],
+        template_name: "X".into(), item_id: None, parameters: vec![],
     }).await;
     assert!(matches!(no_param, Err(QualityError::Invalid(_))), "template needs a parameter");
 
     let bad_range = svc.create_template(NewTemplate {
-        company_id: company, template_name: "X".into(), item_id: None,
+        template_name: "X".into(), item_id: None,
         parameters: vec![NewTemplateParameter { parameter_name: "D".into(), numeric: true,
             min_value: Some(dec("10")), max_value: Some(dec("5")), spec_text: None }],
     }).await;
     assert!(matches!(bad_range, Err(QualityError::Invalid(_))), "numeric min must be <= max");
 
-    let tpl = diameter_color_template(&svc, company, item).await;
+    let tpl = diameter_color_template(&svc, item).await;
     let no_reading = svc.inspect(NewInspection {
-        company_id: company, template_id: tpl, item_id: item, inspection_type: "incoming".into(),
+        template_id: tpl, item_id: item, inspection_type: "incoming".into(),
         source_type: None, source_id: None, sample_size: 1, readings: vec![],
     }, dt("2026-07-07T09:00:00Z"), &sink).await;
     assert!(matches!(no_reading, Err(QualityError::Invalid(_))), "inspection needs a reading");
 
     let bad_param = svc.inspect(NewInspection {
-        company_id: company, template_id: tpl, item_id: item, inspection_type: "incoming".into(),
+        template_id: tpl, item_id: item, inspection_type: "incoming".into(),
         source_type: None, source_id: None, sample_size: 1,
         readings: vec![NewReading { parameter_name: "Weight".into(), value: Some(dec("1")), manual_pass: None, remarks: None }],
     }, dt("2026-07-07T09:00:00Z"), &sink).await;

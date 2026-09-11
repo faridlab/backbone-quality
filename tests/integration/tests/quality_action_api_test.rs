@@ -24,7 +24,6 @@ impl TestDataGenerator for QualityActionTestData {
         let now = Utc::now().to_rfc3339();
         json!({
             "id": Uuid::new_v4().to_string(),
-            "company_id": Uuid::new_v4().to_string(),
             "non_conformance_id": Uuid::new_v4().to_string(),
             "action_type": "corrective",
             "procedure_id": null,
@@ -40,7 +39,6 @@ impl TestDataGenerator for QualityActionTestData {
         let now = Utc::now().to_rfc3339();
         json!({
             "id": id,
-            "company_id": Uuid::new_v4().to_string(),
             "non_conformance_id": Uuid::new_v4().to_string(),
             "action_type": "corrective",
             "procedure_id": null,

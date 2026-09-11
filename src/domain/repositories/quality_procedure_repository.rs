@@ -44,7 +44,6 @@ pub struct QualityProcedurePaginatedResult {
 /// Filter parameters for list queries
 #[derive(Debug, Clone, Default)]
 pub struct QualityProcedureFilter {
-    pub company_id: Option<Uuid>,
     pub procedure_name: Option<String>,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<String>,
@@ -54,7 +53,7 @@ pub struct QualityProcedureFilter {
 impl QualityProcedureFilter {
     /// Check if any filter is set
     pub fn has_filters(&self) -> bool {
-        self.company_id.is_some() || self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.status.is_some()
+        self.procedure_name.is_some() || self.parent_procedure_id.is_some() || self.description.is_some() || self.status.is_some()
     }
 }
 

@@ -49,7 +49,6 @@ impl From<NonConformanceId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NonConformanceDto {
     pub id: NonConformanceId,
-    pub company_id: Uuid,
     pub subject: String,
     pub source_inspection_id: Option<Uuid>,
     pub item_id: Option<Uuid>,
@@ -112,7 +111,6 @@ impl From<QualityActionId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityActionDto {
     pub id: QualityActionId,
-    pub company_id: Uuid,
     pub non_conformance_id: Uuid,
     pub action_type: QualityActionType,
     pub procedure_id: Option<Uuid>,
@@ -174,7 +172,6 @@ impl From<QualityInspectionId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityInspectionDto {
     pub id: QualityInspectionId,
-    pub company_id: Uuid,
     pub template_id: Option<Uuid>,
     pub item_id: Uuid,
     pub inspection_type: InspectionType,
@@ -238,7 +235,6 @@ impl From<QualityInspectionReadingId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityInspectionReadingDto {
     pub id: QualityInspectionReadingId,
-    pub company_id: Uuid,
     pub inspection_id: Uuid,
     pub parameter_name: String,
     pub numeric: bool,
@@ -302,7 +298,6 @@ impl From<QualityInspectionTemplateId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityInspectionTemplateDto {
     pub id: QualityInspectionTemplateId,
-    pub company_id: Uuid,
     pub template_name: String,
     pub item_id: Option<Uuid>,
     pub status: QualityInspectionTemplateStatus,
@@ -361,7 +356,6 @@ impl From<QualityInspectionParameterId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityInspectionParameterDto {
     pub id: QualityInspectionParameterId,
-    pub company_id: Uuid,
     pub template_id: Uuid,
     pub parameter_name: String,
     pub numeric: bool,
@@ -422,7 +416,6 @@ impl From<QualityProcedureId> for Uuid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityProcedureDto {
     pub id: QualityProcedureId,
-    pub company_id: Uuid,
     pub procedure_name: String,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<String>,

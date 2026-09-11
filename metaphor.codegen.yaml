@@ -68,3 +68,10 @@ user_owned:
   - "migrations/20260726100000_fence_outbox_company_id.down.sql"
   - "migrations/20260821130000_status_lifecycle.up.sql"
   - "migrations/20260821130000_status_lifecycle.down.sql"
+  # The guarded company-artifact strip — the strip's ordering guard is hand-authored logic
+  # (decorator-first: never drop the last tenancy key on a populated table).
+  - "migrations/20260911150000_strip_tenancy.up.sql"
+  - "migrations/20260911150000_strip_tenancy.down.sql"
+  # The undecorated-posture probe: pins the half-fence (RLS flags armed, module ships no
+  # policy) and the ambient-org-scope binding contract from below.
+  - "tests/tenancy_posture_probe.rs"

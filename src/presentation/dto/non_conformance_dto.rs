@@ -34,9 +34,6 @@ use crate::domain::entity::NonConformanceStatus;
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct CreateNonConformanceDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 200)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub subject: String,
@@ -69,9 +66,6 @@ pub struct CreateNonConformanceDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateNonConformanceDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(alias = "company_id")]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "validation", validate(length(max = 200)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub subject: String,
@@ -104,9 +98,6 @@ pub struct UpdateNonConformanceDto {
 #[cfg_attr(feature = "validation", derive(Validate))]
 #[serde(rename_all = "camelCase")]
 pub struct PatchNonConformanceDto {
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    #[serde(skip_serializing_if = "Option::is_none", alias = "company_id")]
-    pub company_id: Option<Uuid>,
     #[cfg_attr(feature = "validation", validate(length(max = 200)))]
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -132,7 +123,7 @@ pub struct PatchNonConformanceDto {
 impl PatchNonConformanceDto {
     /// Check if any field is set
     pub fn has_changes(&self) -> bool {
-        self.company_id.is_some() || self.subject.is_some() || self.source_inspection_id.is_some() || self.item_id.is_some() || self.severity.is_some() || self.status.is_some() || self.description.is_some() || self.opened_at.is_some() || self.closed_at.is_some()
+        self.subject.is_some() || self.source_inspection_id.is_some() || self.item_id.is_some() || self.severity.is_some() || self.status.is_some() || self.description.is_some() || self.opened_at.is_some() || self.closed_at.is_some()
     }
 }
 
@@ -150,8 +141,6 @@ impl PatchNonConformanceDto {
 pub struct NonConformanceResponseDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     pub id: Uuid,
-    #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
-    pub company_id: Uuid,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub subject: String,
     pub source_inspection_id: Option<Uuid>,
@@ -219,9 +208,9 @@ impl NonConformanceListResponseDto {
 #[serde(rename_all = "camelCase")]
 pub struct NonConformanceSummaryDto {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub subject: String,
     pub source_inspection_id: Option<Uuid>,
+    pub item_id: Option<Uuid>,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -233,7 +222,6 @@ impl From<NonConformance> for NonConformanceResponseDto {
     fn from(entity: NonConformance) -> Self {
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             subject: entity.subject,
             source_inspection_id: entity.source_inspection_id,
             item_id: entity.item_id,
@@ -252,9 +240,9 @@ impl From<NonConformance> for NonConformanceSummaryDto {
         let created_at = backbone_core::PersistentEntity::created_at(&entity);
         Self {
             id: entity.id,
-            company_id: entity.company_id,
             subject: entity.subject,
             source_inspection_id: entity.source_inspection_id,
+            item_id: entity.item_id,
             created_at,
         }
     }
@@ -264,7 +252,6 @@ impl From<CreateNonConformanceDto> for NonConformance {
     fn from(dto: CreateNonConformanceDto) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id: dto.company_id,
             subject: dto.subject,
             source_inspection_id: dto.source_inspection_id,
             item_id: dto.item_id,
@@ -282,7 +269,6 @@ impl From<&NonConformance> for NonConformanceResponseDto {
     fn from(entity: &NonConformance) -> Self {
         Self {
             id: entity.id.clone(),
-            company_id: entity.company_id.clone(),
             subject: entity.subject.clone(),
             source_inspection_id: entity.source_inspection_id.clone(),
             item_id: entity.item_id.clone(),
@@ -304,7 +290,6 @@ impl backbone_core::FromCreateDto<CreateNonConformanceDto> for NonConformance {
 
 impl backbone_core::ApplyUpdateDto<UpdateNonConformanceDto> for NonConformance {
     fn apply_update(mut self, dto: UpdateNonConformanceDto) -> backbone_core::ServiceResult<Self> {
-        self.company_id = dto.company_id;
         self.subject = dto.subject;
         self.source_inspection_id = dto.source_inspection_id;
         self.item_id = dto.item_id;

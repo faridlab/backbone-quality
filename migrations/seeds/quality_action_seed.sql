@@ -6,7 +6,6 @@
 
 -- INSERT INTO quality.quality_actions (
 --     id,
---     company_id,
 --     non_conformance_id,
 --     action_type,
 --     procedure_id,

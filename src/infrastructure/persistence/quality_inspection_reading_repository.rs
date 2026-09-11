@@ -7,8 +7,10 @@
 //!
 //! Thin newtype over `backbone_orm::GenericCrudRepository<QualityInspectionReading, backbone_orm::SoftDelete>`.
 //! All standard CRUD methods are available via `Deref`.
+//!
+//! The module carries no tenancy of its own (ADR-0029): statements are tenant-agnostic and ride the
+//! composing service's ambient org scope.
 
-use anyhow::Result;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -42,10 +44,9 @@ impl QualityInspectionReadingRepository {
 ///
 /// Mirrors the raw column shape rather than the `QualityInspectionReading` entity. The criterion
 /// (`min_value`/`max_value`) is SNAPSHOTTED onto the reading, and `result` is the caller's already-made
-/// per-reading judgement, cast at the DB (`$9::reading_result`) — the SQL does not re-judge it.
+/// per-reading judgement, cast at the DB (`$8::reading_result`) — the SQL does not re-judge it.
 pub struct NewReadingRow<'a> {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub inspection_id: Uuid,
     pub parameter_name: &'a str,
     pub numeric: bool,
@@ -61,10 +62,8 @@ pub struct NewReadingRow<'a> {
 /// 4-layer rule.
 impl QualityInspectionReadingRepository {
     /// Insert one judged reading. Takes the CALLER'S connection so it commits with the inspection header
-    /// it belongs to. The caller has already bound the company on this connection — don't re-bind here.
-    /// `company_id` is the DENORMALIZED owner (ADR-0010 Decision A): copied from the inspection header
-    /// by the write path so the FORALL RLS fence applies without a parent-join. The WITH CHECK policy
-    /// verifies it matches the ambient `app.company_id` (which the caller has bound).
+    /// it belongs to. The caller has already relayed the ambient org scope onto this connection
+    /// (`relay_ambient_scope`) — don't re-bind here.
     pub async fn insert_reading(
         &self,
         conn: &mut sqlx::PgConnection,
@@ -72,11 +71,11 @@ impl QualityInspectionReadingRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO quality.quality_inspection_readings
-                 (id, company_id, inspection_id, parameter_name, numeric, reading_value, min_value,
+                 (id, inspection_id, parameter_name, numeric, reading_value, min_value,
                   max_value, manual_result, result, remarks)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::reading_result,$11)"#,
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::reading_result,$10)"#,
         )
-        .bind(r.id).bind(r.company_id).bind(r.inspection_id).bind(r.parameter_name).bind(r.numeric)
+        .bind(r.id).bind(r.inspection_id).bind(r.parameter_name).bind(r.numeric)
         .bind(r.reading_value).bind(r.min_value).bind(r.max_value).bind(r.manual_result)
         .bind(r.result).bind(r.remarks)
         .execute(conn)

@@ -61,25 +61,12 @@ shared_types:
 
   Metadata: [Timestamps, Actors]
 
-# =============================================================================
-# Enterprise-SPC Company Fence (ADR-0014)
-# =============================================================================
-# Posture: strict — every quality table carries a @required company_id column
-# and is protected by hand-written RLS policies that fence reads to the
-# executing company_id context. No shared_blank rows: all inspections,
-# procedures, non-conformances, and actions belong to a single company.
-#
-# Posture map (entity -> realized fence, all under this one declaration):
-#   QualityInspectionTemplate -> strict (@required company_id)
-#   QualityInspection          -> strict
-#   QualityProcedure          -> strict
-#   NonConformance             -> strict
-#   QualityAction              -> strict
-#
-# Enforcement: per ADR-0015, keys are grounded by the P6 family pass — this
-# declaration records the architectural posture only.
-# -----------------------------------------------------------------------------
-company_fence: strict
+# Tenancy: none, by design (ADR-0029). The module is tenant-agnostic and reusable —
+# it ships no scoping column and no fence declaration. A composing backend-service
+# that wants these tables org-scoped declares them in its tenancy.yaml; the
+# decorator installs org_unit_id, the RLS policy, and the org-scoped per-unit
+# indexes (the status listing indexes on templates, inspections, procedures and
+# non-conformances) at composition time.
 
 # Import each entity model.
 imports:

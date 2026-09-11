@@ -7,8 +7,11 @@
 //!
 //! Thin newtype over `backbone_orm::GenericCrudRepository<QualityInspectionTemplate, backbone_orm::SoftDelete>`.
 //! All standard CRUD methods are available via `Deref`.
+//!
+//! The module carries no tenancy of its own (ADR-0029): statements are tenant-agnostic and ride the
+//! composing service's ambient org scope — on a transaction the caller re-binds it before reaching this
+//! SQL; on the pool the scoped read helpers take the request-dedicated connection the scope bound.
 
-use anyhow::Result;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -42,7 +45,6 @@ impl QualityInspectionTemplateRepository {
 /// Mirrors the raw column shape rather than the `QualityInspectionTemplate` entity.
 pub struct NewTemplateRow<'a> {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub template_name: &'a str,
     pub item_id: Option<Uuid>,
 }
@@ -51,18 +53,18 @@ pub struct NewTemplateRow<'a> {
 /// 4-layer rule.
 impl QualityInspectionTemplateRepository {
     /// Insert the template header. Takes the CALLER'S connection so the header and its parameter rows
-    /// commit as one unit. The caller binds the company on that connection (`bind_company_on`) before
-    /// calling — don't re-bind here.
+    /// commit as one unit. The caller has already relayed the ambient org scope onto that connection
+    /// (`relay_ambient_scope`) — don't re-bind here.
     pub async fn insert_template(
         &self,
         conn: &mut sqlx::PgConnection,
         t: &NewTemplateRow<'_>,
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
-            r#"INSERT INTO quality.quality_inspection_templates (id, company_id, template_name, item_id, status)
-               VALUES ($1,$2,$3,$4,'active')"#,
+            r#"INSERT INTO quality.quality_inspection_templates (id, template_name, item_id, status)
+               VALUES ($1,$2,$3,'active')"#,
         )
-        .bind(t.id).bind(t.company_id).bind(t.template_name).bind(t.item_id)
+        .bind(t.id).bind(t.template_name).bind(t.item_id)
         .execute(conn)
         .await?;
         Ok(())

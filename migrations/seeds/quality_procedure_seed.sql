@@ -6,7 +6,6 @@
 
 -- INSERT INTO quality.quality_procedures (
 --     id,
---     company_id,
 --     procedure_name,
 --     parent_procedure_id,
 --     description,

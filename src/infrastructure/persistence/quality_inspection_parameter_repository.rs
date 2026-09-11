@@ -7,13 +7,19 @@
 //!
 //! Thin newtype over `backbone_orm::GenericCrudRepository<QualityInspectionParameter, backbone_orm::SoftDelete>`.
 //! All standard CRUD methods are available via `Deref`.
+//!
+//! The module carries no tenancy of its own (ADR-0029): statements are tenant-agnostic and ride the
+//! composing service's ambient org scope.
 
-use anyhow::Result;
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-use backbone_orm::company_scope;
+// The multi-row read twin lives only in the legacy `company_scope` module. Its connection
+// discipline is what this repository needs — request-dedicated connection when the composing
+// service bound one, plain pool otherwise. The helper's legacy task-local branch is never
+// taken: this module sets no legacy scope of its own (ADR-0029).
+use backbone_orm::company_scope::fetch_all_rows_scoped;
 
 use crate::domain::entity::QualityInspectionParameter;
 
@@ -45,7 +51,6 @@ impl QualityInspectionParameterRepository {
 /// Mirrors the raw column shape rather than the `QualityInspectionParameter` entity.
 pub struct NewTemplateParameterRow<'a> {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub template_id: Uuid,
     pub parameter_name: &'a str,
     pub numeric: bool,
@@ -66,11 +71,8 @@ pub struct CriterionRow {
 /// 4-layer rule.
 impl QualityInspectionParameterRepository {
     /// Insert one parameter + its criterion. Takes the CALLER'S connection so it commits with the
-    /// template header it belongs to. The caller has already bound the company on this connection —
-    /// don't re-bind here. `company_id` is the DENORMALIZED owner (ADR-0010 Decision A): copied from
-    /// the template header by the write path so the FORALL RLS fence applies without a parent-join.
-    /// The WITH CHECK policy verifies it matches the ambient `app.company_id` (which the caller has
-    /// bound).
+    /// template header it belongs to. The caller has already relayed the ambient org scope onto this
+    /// connection (`relay_ambient_scope`) — don't re-bind here.
     pub async fn insert_parameter(
         &self,
         conn: &mut sqlx::PgConnection,
@@ -78,10 +80,10 @@ impl QualityInspectionParameterRepository {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO quality.quality_inspection_parameters
-                 (id, company_id, template_id, parameter_name, numeric, min_value, max_value, spec_text)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+                 (id, template_id, parameter_name, numeric, min_value, max_value, spec_text)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
         )
-        .bind(p.id).bind(p.company_id).bind(p.template_id).bind(p.parameter_name).bind(p.numeric)
+        .bind(p.id).bind(p.template_id).bind(p.parameter_name).bind(p.numeric)
         .bind(p.min_value).bind(p.max_value).bind(p.spec_text)
         .execute(conn)
         .await?;
@@ -91,11 +93,11 @@ impl QualityInspectionParameterRepository {
     /// The WHOLE template's criteria in one snapshot — consistent across readings, and the basis for the
     /// caller's coverage check.
     ///
-    /// A read outside any transaction: takes the pool and runs `fetch_all_rows_scoped` so the RLS fence
-    /// (ADR-0008) applies. The caller wraps this in `with_company_scope(Some(company))`, so a template
-    /// belonging to another tenant reads as absent rather than leaking its criteria.
+    /// A read outside any transaction: takes the pool and runs the scoped read helper, so once the
+    /// composing service's decorator is installed a template belonging to another tenant reads as absent
+    /// rather than leaking its criteria; unscoped (standalone) it reads plainly.
     pub async fn list_criteria(&self, pool: &PgPool, template_id: Uuid) -> Result<Vec<CriterionRow>, sqlx::Error> {
-        let rows = company_scope::fetch_all_rows_scoped(
+        let rows = fetch_all_rows_scoped(
             pool,
             sqlx::query(
                 r#"SELECT parameter_name, numeric, min_value, max_value FROM quality.quality_inspection_parameters

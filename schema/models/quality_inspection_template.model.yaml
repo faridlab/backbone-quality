@@ -5,6 +5,9 @@
 # per parameter, the criterion: a numeric [min,max] range or a free-text spec. An inspection snapshots
 # each parameter's criterion onto its reading at inspect time, so a later template edit never rewrites a
 # completed inspection. Posts NO GL.
+#
+# Tenancy: none, by design (ADR-0029). The module is tenant-agnostic; a composing
+# service's tenancy decorator owns org scoping for these tables.
 # =============================================================================
 
 models:
@@ -16,10 +19,6 @@ models:
         type: uuid
         attributes: ["@id", "@default(uuid)"]
         description: "Unique template id"
-      company_id:
-        type: uuid
-        attributes: ["@required", "@exclude_from_foreign_key_check"]
-        description: "Org owner # logical FK to organization.Company.id"
       template_name:
         type: string
         attributes: ["@required", "@max(140)"]
@@ -38,8 +37,9 @@ models:
         attributes: ["@audit_metadata"]
         description: "Audit metadata"
     indexes:
-      - type: index
-        fields: [company_id, status]
+      # No tenancy indexes (ADR-0029): the module is tenant-agnostic; the composing
+      # service's tenancy decorator owns org scoping for this table (the status
+      # listing index re-lands org-scoped at composition time).
       - type: index
         fields: [item_id]
 
@@ -51,10 +51,6 @@ models:
         type: uuid
         attributes: ["@id", "@default(uuid)"]
         description: "Unique parameter id"
-      company_id:
-        type: uuid
-        attributes: ["@required", "@exclude_from_foreign_key_check"]
-        description: "Org owner # logical FK to organization.Company.id — DENORMALIZED from the parent template (ADR-0010 Decision A). Kept in sync by the write path (create_template copies it off the template header); the FORALL RLS policy fences reads/writes without a parent-join."
       template_id:
         type: uuid
         attributes: ["@required", "@foreign_key(QualityInspectionTemplate.id)"]

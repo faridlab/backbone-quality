@@ -50,7 +50,6 @@ impl std::ops::Deref for QualityProcedureId {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct QualityProcedure {
     pub id: Uuid,
-    pub company_id: Uuid,
     pub procedure_name: String,
     pub parent_procedure_id: Option<Uuid>,
     pub description: Option<String>,
@@ -67,10 +66,9 @@ impl QualityProcedure {
     }
 
     /// Create a new QualityProcedure with required fields
-    pub fn new(company_id: Uuid, procedure_name: String, status: QualityProcedureStatus) -> Self {
+    pub fn new(procedure_name: String, status: QualityProcedureStatus) -> Self {
         Self {
             id: Uuid::new_v4(),
-            company_id,
             procedure_name,
             parent_procedure_id: None,
             description: None,
@@ -159,9 +157,6 @@ impl QualityProcedure {
     pub fn apply_patch(&mut self, fields: std::collections::HashMap<String, serde_json::Value>) {
         for (key, value) in fields {
             match key.as_str() {
-                "company_id" => {
-                    if let Ok(v) = serde_json::from_value(value) { self.company_id = v; }
-                }
                 "procedure_name" => {
                     if let Ok(v) = serde_json::from_value(value) { self.procedure_name = v; }
                 }
@@ -228,16 +223,12 @@ impl backbone_orm::EntityRepoMeta for QualityProcedure {
     fn column_types() -> std::collections::HashMap<String, String> {
         let mut m = std::collections::HashMap::new();
         m.insert("id".to_string(), "uuid".to_string());
-        m.insert("company_id".to_string(), "uuid".to_string());
         m.insert("parent_procedure_id".to_string(), "uuid".to_string());
         m.insert("status".to_string(), "quality_procedure_status".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {
         &["procedure_name"]
-    }
-    fn company_field() -> Option<&'static str> {
-        Some("company_id")
     }
 }
 
@@ -247,7 +238,6 @@ impl backbone_orm::EntityRepoMeta for QualityProcedure {
 /// System fields (id, metadata, timestamps) are auto-initialized.
 #[derive(Debug, Clone, Default)]
 pub struct QualityProcedureBuilder {
-    company_id: Option<Uuid>,
     procedure_name: Option<String>,
     parent_procedure_id: Option<Uuid>,
     description: Option<String>,
@@ -255,12 +245,6 @@ pub struct QualityProcedureBuilder {
 }
 
 impl QualityProcedureBuilder {
-    /// Set the company_id field (required)
-    pub fn company_id(mut self, value: Uuid) -> Self {
-        self.company_id = Some(value);
-        self
-    }
-
     /// Set the procedure_name field (required)
     pub fn procedure_name(mut self, value: String) -> Self {
         self.procedure_name = Some(value);
@@ -289,12 +273,10 @@ impl QualityProcedureBuilder {
     ///
     /// Returns Err if any required field without a default is missing.
     pub fn build(self) -> Result<QualityProcedure, String> {
-        let company_id = self.company_id.ok_or_else(|| "company_id is required".to_string())?;
         let procedure_name = self.procedure_name.ok_or_else(|| "procedure_name is required".to_string())?;
 
         Ok(QualityProcedure {
             id: Uuid::new_v4(),
-            company_id,
             procedure_name,
             parent_procedure_id: self.parent_procedure_id,
             description: self.description,
