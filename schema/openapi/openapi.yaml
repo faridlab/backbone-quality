@@ -7,7 +7,7 @@ info:
     This API provides 11 standard CRUD endpoints for each model.
 
 servers:
-  - url: http://localhost:3000
+  - url: /
     description: Development server
 
 tags:
@@ -27,7 +27,7 @@ tags:
     description: QualityProcedure management endpoints
 
 paths:
-  /api/v1/non_conformances:
+  /api/v1/quality/non_conformances:
     get:
       tags:
         - NonConformances
@@ -73,7 +73,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/non_conformances/{id}:
+  /api/v1/quality/non_conformances/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -145,7 +145,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/non_conformances/bulk:
+  /api/v1/quality/non_conformances/bulk:
     post:
       tags:
         - NonConformances
@@ -237,7 +237,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/non_conformances/upsert:
+  /api/v1/quality/non_conformances/upsert:
     post:
       tags:
         - NonConformances
@@ -267,7 +267,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/NonConformance'
 
-  /api/v1/non_conformances/trash:
+  /api/v1/quality/non_conformances/trash:
     get:
       tags:
         - NonConformances
@@ -284,7 +284,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/NonConformanceList'
 
-  /api/v1/non_conformances/{id}/restore:
+  /api/v1/quality/non_conformances/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -302,7 +302,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/non_conformances/empty:
+  /api/v1/quality/non_conformances/empty:
     delete:
       tags:
         - NonConformances
@@ -319,7 +319,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/non_conformances/delete/bulk:
+  /api/v1/quality/non_conformances/delete/bulk:
     post:
       tags:
         - NonConformances
@@ -339,7 +339,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/non_conformances/restore/bulk:
+  /api/v1/quality/non_conformances/restore/bulk:
     post:
       tags:
         - NonConformances
@@ -357,7 +357,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/non_conformances/restore/all:
+  /api/v1/quality/non_conformances/restore/all:
     post:
       tags:
         - NonConformances
@@ -373,7 +373,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/non_conformances/trash/bulk:
+  /api/v1/quality/non_conformances/trash/bulk:
     delete:
       tags:
         - NonConformances
@@ -393,7 +393,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_actions:
+  /api/v1/quality/quality_actions:
     get:
       tags:
         - QualityActions
@@ -439,7 +439,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/quality_actions/{id}:
+  /api/v1/quality/quality_actions/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -511,7 +511,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_actions/bulk:
+  /api/v1/quality/quality_actions/bulk:
     post:
       tags:
         - QualityActions
@@ -603,7 +603,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_actions/upsert:
+  /api/v1/quality/quality_actions/upsert:
     post:
       tags:
         - QualityActions
@@ -633,7 +633,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityAction'
 
-  /api/v1/quality_actions/trash:
+  /api/v1/quality/quality_actions/trash:
     get:
       tags:
         - QualityActions
@@ -650,7 +650,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityActionList'
 
-  /api/v1/quality_actions/{id}/restore:
+  /api/v1/quality/quality_actions/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -668,7 +668,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_actions/empty:
+  /api/v1/quality/quality_actions/empty:
     delete:
       tags:
         - QualityActions
@@ -685,7 +685,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/quality_actions/delete/bulk:
+  /api/v1/quality/quality_actions/delete/bulk:
     post:
       tags:
         - QualityActions
@@ -705,7 +705,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_actions/restore/bulk:
+  /api/v1/quality/quality_actions/restore/bulk:
     post:
       tags:
         - QualityActions
@@ -723,7 +723,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_actions/restore/all:
+  /api/v1/quality/quality_actions/restore/all:
     post:
       tags:
         - QualityActions
@@ -739,7 +739,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/quality_actions/trash/bulk:
+  /api/v1/quality/quality_actions/trash/bulk:
     delete:
       tags:
         - QualityActions
@@ -759,7 +759,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspections:
+  /api/v1/quality/quality_inspections:
     get:
       tags:
         - QualityInspections
@@ -805,7 +805,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/quality_inspections/{id}:
+  /api/v1/quality/quality_inspections/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -877,7 +877,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspections/bulk:
+  /api/v1/quality/quality_inspections/bulk:
     post:
       tags:
         - QualityInspections
@@ -969,7 +969,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspections/upsert:
+  /api/v1/quality/quality_inspections/upsert:
     post:
       tags:
         - QualityInspections
@@ -999,7 +999,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspection'
 
-  /api/v1/quality_inspections/trash:
+  /api/v1/quality/quality_inspections/trash:
     get:
       tags:
         - QualityInspections
@@ -1016,7 +1016,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspectionList'
 
-  /api/v1/quality_inspections/{id}/restore:
+  /api/v1/quality/quality_inspections/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -1034,7 +1034,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspections/empty:
+  /api/v1/quality/quality_inspections/empty:
     delete:
       tags:
         - QualityInspections
@@ -1051,7 +1051,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/quality_inspections/delete/bulk:
+  /api/v1/quality/quality_inspections/delete/bulk:
     post:
       tags:
         - QualityInspections
@@ -1071,7 +1071,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspections/restore/bulk:
+  /api/v1/quality/quality_inspections/restore/bulk:
     post:
       tags:
         - QualityInspections
@@ -1089,7 +1089,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspections/restore/all:
+  /api/v1/quality/quality_inspections/restore/all:
     post:
       tags:
         - QualityInspections
@@ -1105,7 +1105,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/quality_inspections/trash/bulk:
+  /api/v1/quality/quality_inspections/trash/bulk:
     delete:
       tags:
         - QualityInspections
@@ -1125,7 +1125,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_readings:
+  /api/v1/quality/quality_inspection_readings:
     get:
       tags:
         - QualityInspectionReadings
@@ -1171,7 +1171,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/quality_inspection_readings/{id}:
+  /api/v1/quality/quality_inspection_readings/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -1243,7 +1243,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspection_readings/bulk:
+  /api/v1/quality/quality_inspection_readings/bulk:
     post:
       tags:
         - QualityInspectionReadings
@@ -1335,7 +1335,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_readings/upsert:
+  /api/v1/quality/quality_inspection_readings/upsert:
     post:
       tags:
         - QualityInspectionReadings
@@ -1365,7 +1365,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspectionReading'
 
-  /api/v1/quality_inspection_readings/trash:
+  /api/v1/quality/quality_inspection_readings/trash:
     get:
       tags:
         - QualityInspectionReadings
@@ -1382,7 +1382,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspectionReadingList'
 
-  /api/v1/quality_inspection_readings/{id}/restore:
+  /api/v1/quality/quality_inspection_readings/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -1400,7 +1400,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspection_readings/empty:
+  /api/v1/quality/quality_inspection_readings/empty:
     delete:
       tags:
         - QualityInspectionReadings
@@ -1417,7 +1417,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/quality_inspection_readings/delete/bulk:
+  /api/v1/quality/quality_inspection_readings/delete/bulk:
     post:
       tags:
         - QualityInspectionReadings
@@ -1437,7 +1437,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_readings/restore/bulk:
+  /api/v1/quality/quality_inspection_readings/restore/bulk:
     post:
       tags:
         - QualityInspectionReadings
@@ -1455,7 +1455,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_readings/restore/all:
+  /api/v1/quality/quality_inspection_readings/restore/all:
     post:
       tags:
         - QualityInspectionReadings
@@ -1471,7 +1471,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/quality_inspection_readings/trash/bulk:
+  /api/v1/quality/quality_inspection_readings/trash/bulk:
     delete:
       tags:
         - QualityInspectionReadings
@@ -1491,7 +1491,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_templates:
+  /api/v1/quality/quality_inspection_templates:
     get:
       tags:
         - QualityInspectionTemplates
@@ -1537,7 +1537,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/quality_inspection_templates/{id}:
+  /api/v1/quality/quality_inspection_templates/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -1609,7 +1609,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspection_templates/bulk:
+  /api/v1/quality/quality_inspection_templates/bulk:
     post:
       tags:
         - QualityInspectionTemplates
@@ -1701,7 +1701,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_templates/upsert:
+  /api/v1/quality/quality_inspection_templates/upsert:
     post:
       tags:
         - QualityInspectionTemplates
@@ -1731,7 +1731,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspectionTemplate'
 
-  /api/v1/quality_inspection_templates/trash:
+  /api/v1/quality/quality_inspection_templates/trash:
     get:
       tags:
         - QualityInspectionTemplates
@@ -1748,7 +1748,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspectionTemplateList'
 
-  /api/v1/quality_inspection_templates/{id}/restore:
+  /api/v1/quality/quality_inspection_templates/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -1766,7 +1766,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspection_templates/empty:
+  /api/v1/quality/quality_inspection_templates/empty:
     delete:
       tags:
         - QualityInspectionTemplates
@@ -1783,7 +1783,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/quality_inspection_templates/delete/bulk:
+  /api/v1/quality/quality_inspection_templates/delete/bulk:
     post:
       tags:
         - QualityInspectionTemplates
@@ -1803,7 +1803,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_templates/restore/bulk:
+  /api/v1/quality/quality_inspection_templates/restore/bulk:
     post:
       tags:
         - QualityInspectionTemplates
@@ -1821,7 +1821,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_templates/restore/all:
+  /api/v1/quality/quality_inspection_templates/restore/all:
     post:
       tags:
         - QualityInspectionTemplates
@@ -1837,7 +1837,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/quality_inspection_templates/trash/bulk:
+  /api/v1/quality/quality_inspection_templates/trash/bulk:
     delete:
       tags:
         - QualityInspectionTemplates
@@ -1857,7 +1857,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_parameters:
+  /api/v1/quality/quality_inspection_parameters:
     get:
       tags:
         - QualityInspectionParameters
@@ -1903,7 +1903,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/quality_inspection_parameters/{id}:
+  /api/v1/quality/quality_inspection_parameters/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -1975,7 +1975,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspection_parameters/bulk:
+  /api/v1/quality/quality_inspection_parameters/bulk:
     post:
       tags:
         - QualityInspectionParameters
@@ -2067,7 +2067,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_parameters/upsert:
+  /api/v1/quality/quality_inspection_parameters/upsert:
     post:
       tags:
         - QualityInspectionParameters
@@ -2097,7 +2097,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspectionParameter'
 
-  /api/v1/quality_inspection_parameters/trash:
+  /api/v1/quality/quality_inspection_parameters/trash:
     get:
       tags:
         - QualityInspectionParameters
@@ -2114,7 +2114,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityInspectionParameterList'
 
-  /api/v1/quality_inspection_parameters/{id}/restore:
+  /api/v1/quality/quality_inspection_parameters/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -2132,7 +2132,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_inspection_parameters/empty:
+  /api/v1/quality/quality_inspection_parameters/empty:
     delete:
       tags:
         - QualityInspectionParameters
@@ -2149,7 +2149,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/quality_inspection_parameters/delete/bulk:
+  /api/v1/quality/quality_inspection_parameters/delete/bulk:
     post:
       tags:
         - QualityInspectionParameters
@@ -2169,7 +2169,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_parameters/restore/bulk:
+  /api/v1/quality/quality_inspection_parameters/restore/bulk:
     post:
       tags:
         - QualityInspectionParameters
@@ -2187,7 +2187,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_inspection_parameters/restore/all:
+  /api/v1/quality/quality_inspection_parameters/restore/all:
     post:
       tags:
         - QualityInspectionParameters
@@ -2203,7 +2203,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/quality_inspection_parameters/trash/bulk:
+  /api/v1/quality/quality_inspection_parameters/trash/bulk:
     delete:
       tags:
         - QualityInspectionParameters
@@ -2223,7 +2223,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_procedures:
+  /api/v1/quality/quality_procedures:
     get:
       tags:
         - QualityProcedures
@@ -2269,7 +2269,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/quality_procedures/{id}:
+  /api/v1/quality/quality_procedures/{id}:
     parameters:
       - $ref: '#/components/parameters/IdParam'
 
@@ -2341,7 +2341,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_procedures/bulk:
+  /api/v1/quality/quality_procedures/bulk:
     post:
       tags:
         - QualityProcedures
@@ -2433,7 +2433,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_procedures/upsert:
+  /api/v1/quality/quality_procedures/upsert:
     post:
       tags:
         - QualityProcedures
@@ -2463,7 +2463,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityProcedure'
 
-  /api/v1/quality_procedures/trash:
+  /api/v1/quality/quality_procedures/trash:
     get:
       tags:
         - QualityProcedures
@@ -2480,7 +2480,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/QualityProcedureList'
 
-  /api/v1/quality_procedures/{id}/restore:
+  /api/v1/quality/quality_procedures/{id}/restore:
     parameters:
       - $ref: '#/components/parameters/IdParam'
     post:
@@ -2498,7 +2498,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/quality_procedures/empty:
+  /api/v1/quality/quality_procedures/empty:
     delete:
       tags:
         - QualityProcedures
@@ -2515,7 +2515,7 @@ paths:
                   deleted_count:
                     type: integer
 
-  /api/v1/quality_procedures/delete/bulk:
+  /api/v1/quality/quality_procedures/delete/bulk:
     post:
       tags:
         - QualityProcedures
@@ -2535,7 +2535,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_procedures/restore/bulk:
+  /api/v1/quality/quality_procedures/restore/bulk:
     post:
       tags:
         - QualityProcedures
@@ -2553,7 +2553,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/v1/quality_procedures/restore/all:
+  /api/v1/quality/quality_procedures/restore/all:
     post:
       tags:
         - QualityProcedures
@@ -2569,7 +2569,7 @@ paths:
                 properties:
                   restored: { type: integer }
 
-  /api/v1/quality_procedures/trash/bulk:
+  /api/v1/quality/quality_procedures/trash/bulk:
     delete:
       tags:
         - QualityProcedures
