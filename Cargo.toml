@@ -1,6 +1,6 @@
 [package]
 name = "backbone-quality"
-version = "0.6.16"
+version = "0.6.17"
 edition = "2021"
 description = "Minimal Backbone Framework module skeleton"
 
@@ -8,7 +8,7 @@ description = "Minimal Backbone Framework module skeleton"
 path = "src/lib.rs"
 
 [dependencies]
-backbone-outbox = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.30" }
+backbone-outbox = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.31" }
 # -----------------------------------------------------------------------------
 # Backbone Framework crates
 #
@@ -18,10 +18,10 @@ backbone-outbox = { git = "https://github.com/faridlab/backbone-framework", tag 
 # or `rev = "<commit-sha>"`. Cargo dedupes the git fetch — the repo is only
 # cloned once even though four crates reference it.
 # -----------------------------------------------------------------------------
-backbone-core = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.30", features = ["postgres"] }
-backbone-orm = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.30" }
-backbone-auth = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.30" }
-backbone-messaging = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.30" }
+backbone-core = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.31", features = ["postgres"] }
+backbone-orm = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.31" }
+backbone-auth = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.31" }
+backbone-messaging = { git = "https://github.com/faridlab/backbone-framework", tag = "v2.7.31" }
 
 # Core async runtime and serialization
 tokio = { version = "1.0", features = ["full"] }
@@ -94,4 +94,4 @@ rand = "0.8"
 # TEST-ONLY edge: the inspection-trigger seam reads a REAL backbone-inventory Purchase Receipt (the Stock
 # document that triggers an incoming inspection). Dev-dependency ONLY -- the shipped quality library has
 # ZERO normal Cargo edge to inventory (quality drives nothing; it reads + emits events).
-backbone-inventory = { git = "https://github.com/faridlab/backbone-inventory", tag = "v0.9.16" }
+backbone-inventory = { git = "https://github.com/faridlab/backbone-inventory", tag = "v0.9.17" }
