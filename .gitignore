@@ -23,3 +23,8 @@ Thumbs.db
 .claude/
 # graphify knowledge graph (local, not committed)
 graphify-out/
+
+# No .cargo/ directory exists today; ignoring the dropped-config trap
+# (the same quarantine pattern the fleet carries elsewhere).
+.cargo/config.toml
+.cargo/config.toml.quarantined
