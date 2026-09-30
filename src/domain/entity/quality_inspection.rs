@@ -266,6 +266,7 @@ impl backbone_orm::EntityRepoMeta for QualityInspection {
         m.insert("source_id".to_string(), "uuid".to_string());
         m.insert("inspection_type".to_string(), "inspection_type".to_string());
         m.insert("status".to_string(), "inspection_status".to_string());
+        m.insert("inspected_at".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {

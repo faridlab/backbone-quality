@@ -260,6 +260,8 @@ impl backbone_orm::EntityRepoMeta for NonConformance {
         m.insert("item_id".to_string(), "uuid".to_string());
         m.insert("severity".to_string(), "non_conformance_severity".to_string());
         m.insert("status".to_string(), "non_conformance_status".to_string());
+        m.insert("opened_at".to_string(), "timestamptz".to_string());
+        m.insert("closed_at".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {

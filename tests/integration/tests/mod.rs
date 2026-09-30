@@ -15,7 +15,6 @@ pub mod quality_inspection_parameter_api_test;
 pub mod quality_procedure_api_test;
 
 // Re-exports for convenience
-pub use crud_test_base::*;
 pub use non_conformance_api_test::*;
 pub use quality_action_api_test::*;
 pub use quality_inspection_api_test::*;

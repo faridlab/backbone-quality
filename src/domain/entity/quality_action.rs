@@ -249,6 +249,8 @@ impl backbone_orm::EntityRepoMeta for QualityAction {
         m.insert("procedure_id".to_string(), "uuid".to_string());
         m.insert("action_type".to_string(), "quality_action_type".to_string());
         m.insert("status".to_string(), "quality_action_status".to_string());
+        m.insert("due_date".to_string(), "timestamptz".to_string());
+        m.insert("completed_at".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {
