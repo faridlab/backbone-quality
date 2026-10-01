@@ -1,8 +1,8 @@
 [package]
 name = "backbone-quality"
-version = "0.6.25"
+version = "0.6.26"
 edition = "2021"
-description = "Minimal Backbone Framework module skeleton"
+description = "Quality management: inspection templates and inspections, non-conformances, corrective actions and quality procedures"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/faridlab/backbone-quality"
 exclude = [".claude/", ".github/", "graphify-out/"]
