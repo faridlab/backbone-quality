@@ -364,7 +364,7 @@ dependencies = [
 
 [[package]]
 name = "backbone-quality"
-version = "0.6.26"
+version = "0.6.27"
 dependencies = [
  "anyhow",
  "async-trait",
