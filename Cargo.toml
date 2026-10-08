@@ -1,6 +1,6 @@
 [package]
 name = "backbone-quality"
-version = "0.6.27"
+version = "0.7.0"
 edition = "2021"
 description = "Quality management: inspection templates and inspections, non-conformances, corrective actions and quality procedures"
 license = "MIT OR Apache-2.0"
@@ -11,7 +11,7 @@ exclude = [".claude/", ".github/", "graphify-out/"]
 path = "src/lib.rs"
 
 [dependencies]
-backbone-outbox = { version = "2.7.35" }
+backbone-outbox = { version = "3.0.0" }
 # -----------------------------------------------------------------------------
 # Backbone Framework crates
 #
@@ -21,10 +21,10 @@ backbone-outbox = { version = "2.7.35" }
 # or `rev = "<commit-sha>"`. Cargo dedupes the git fetch — the repo is only
 # cloned once even though four crates reference it.
 # -----------------------------------------------------------------------------
-backbone-core = { version = "2.7.35", features = ["postgres"] }
-backbone-orm = { version = "2.7.35" }
-backbone-auth = { version = "2.7.35" }
-backbone-messaging = { version = "2.7.35" }
+backbone-core = { version = "3.0.0", features = ["postgres"] }
+backbone-orm = { version = "3.0.0" }
+backbone-auth = { version = "3.0.0" }
+backbone-messaging = { version = "3.0.0" }
 
 # Core async runtime and serialization
 tokio = { version = "1.0", features = ["full"] }
@@ -97,4 +97,4 @@ rand = "0.8"
 # TEST-ONLY edge: the inspection-trigger seam reads a REAL backbone-inventory Purchase Receipt (the Stock
 # document that triggers an incoming inspection). Dev-dependency ONLY -- the shipped quality library has
 # ZERO normal Cargo edge to inventory (quality drives nothing; it reads + emits events).
-backbone-inventory = { version = "0.9.29" }
+backbone-inventory = { version = "0.10.0" }
