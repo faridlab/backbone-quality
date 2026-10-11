@@ -14,15 +14,6 @@ mod quality_procedure_repository;
 
 // Custom persistence modules
 // <<< CUSTOM
-// The hand-written quality SQL's parameter/projection types (see the repositories declared
-// `user_owned` in metaphor.codegen.yaml).
-pub use non_conformance_repository::{LockedNonConformanceRow, NewNonConformanceRow};
-pub use quality_action_repository::NewQualityActionRow;
-pub use quality_inspection_parameter_repository::{CriterionRow, NewTemplateParameterRow};
-pub use quality_inspection_reading_repository::NewReadingRow;
-pub use quality_inspection_repository::NewInspectionRow;
-pub use quality_inspection_template_repository::NewTemplateRow;
-pub use quality_procedure_repository::NewProcedureRow;
 // END CUSTOM
 
 // Re-exports
@@ -44,3 +35,6 @@ pub use backbone_orm::repository::{
 // Re-export custom persistence types
 // <<< CUSTOM
 // END CUSTOM
+
+// This directory's extension (hand-written; ADR-0031).
+include!("mod.ext.rs");

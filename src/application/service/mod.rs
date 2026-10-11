@@ -16,8 +16,6 @@ pub mod quality_inspection_parameter_service;
 pub mod quality_procedure_service;
 
 // <<< CUSTOM
-pub mod quality_events;
-pub mod quality_write_service;
 // END CUSTOM
 
 pub use non_conformance_service::NonConformanceService;
@@ -28,12 +26,7 @@ pub use quality_inspection_template_service::QualityInspectionTemplateService;
 pub use quality_inspection_parameter_service::QualityInspectionParameterService;
 pub use quality_procedure_service::QualityProcedureService;
 // <<< CUSTOM
-pub use quality_events::{
-    LoggingSink, NonConformanceClosed, NonConformanceRaised, QualityEvent, QualityEventSink,
-    QualityInspectionCompleted,
-};
-pub use quality_write_service::{
-    InspectOutcome, NewInspection, NewNonConformance, NewProcedure, NewQualityAction, NewReading,
-    NewTemplate, NewTemplateParameter, QualityError, QualityWriteService,
-};
 // END CUSTOM
+
+// This directory's extension (hand-written; ADR-0031).
+include!("mod.ext.rs");
