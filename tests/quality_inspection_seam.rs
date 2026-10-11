@@ -24,14 +24,12 @@ async fn qseam1_inspect_a_real_purchase_receipt() {
     let inventory = backbone_inventory::application::service::inventory_write_service::InventoryWriteService::new(pool.clone());
     let sink = CapturingSink::new();
     let item = Uuid::new_v4();
-    // backbone-inventory is not yet tenancy-stripped — its receipt still demands a company id.
-    let inventory_company = Uuid::new_v4();
 
     // A REAL inbound Stock document: a purchase receipt (draft) with the item that will be inspected.
     use backbone_inventory::application::service::inventory_write_service::{NewReceipt, ReceiptLine};
     let receipt = inventory.create_purchase_receipt(NewReceipt {
         receipt_number: format!("PR-{}", Uuid::new_v4()),
-        company_id: inventory_company, branch_id: None, supplier_id: Uuid::new_v4(), source_po_id: None,
+        branch_id: None, supplier_id: Uuid::new_v4(), source_po_id: None,
         warehouse_id: Uuid::new_v4(), posting_date: chrono::Utc::now().date_naive(),
         currency: "USD".into(),
         inventory_account_id: Uuid::new_v4(), grir_account_id: Uuid::new_v4(),
