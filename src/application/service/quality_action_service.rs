@@ -32,5 +32,3 @@ pub type QualityActionService = GenericCrudService<
     QualityActionRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

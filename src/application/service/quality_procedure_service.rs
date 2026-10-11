@@ -32,5 +32,3 @@ pub type QualityProcedureService = GenericCrudService<
     QualityProcedureRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

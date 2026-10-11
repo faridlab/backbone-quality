@@ -16,9 +16,5 @@ pub type QualityInspectionTemplateValidator = EntityValidator<QualityInspectionT
 pub fn quality_inspection_template_validator() -> QualityInspectionTemplateValidator {
     EntityValidator::new()
         .rule(RequiredString::new("template_name", |e: &QualityInspectionTemplate| &e.template_name))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

@@ -186,3 +186,4 @@ pub fn create_protected_quality_procedure_routes<A: AuthMiddleware + Send + Sync
             }
         }))
 }
+

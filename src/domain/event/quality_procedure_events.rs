@@ -11,8 +11,6 @@ use crate::domain::entity::QualityProcedure;
 /// enum containing a `Crud(CrudEvent<QualityProcedure>)` variant.
 pub type QualityProcedureEvent = CrudEvent<QualityProcedure>;
 
-// <<< CUSTOM
-// END CUSTOM
 
 use backbone_messaging::{CrudEventPublisher, NoOpCrudEventPublisher};
 use std::sync::Arc;

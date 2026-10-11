@@ -187,3 +187,4 @@ pub fn create_protected_quality_inspection_routes<A: AuthMiddleware + Send + Syn
             }
         }))
 }
+

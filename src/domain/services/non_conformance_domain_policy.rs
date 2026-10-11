@@ -18,5 +18,3 @@ use crate::domain::entity::NonConformance;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type NonConformanceDomainPolicy = PermitAllPolicy<NonConformance>;
 
-// <<< CUSTOM
-// END CUSTOM

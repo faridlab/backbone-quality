@@ -17,9 +17,5 @@ pub fn quality_inspection_reading_validator() -> QualityInspectionReadingValidat
     EntityValidator::new()
         .rule(RequiredString::new("parameter_name", |e: &QualityInspectionReading| &e.parameter_name))
         .rule(OptionalNotBlank::new("remarks", |e: &QualityInspectionReading| e.remarks.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

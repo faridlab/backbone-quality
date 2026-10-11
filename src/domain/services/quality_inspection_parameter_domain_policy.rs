@@ -18,5 +18,3 @@ use crate::domain::entity::QualityInspectionParameter;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type QualityInspectionParameterDomainPolicy = PermitAllPolicy<QualityInspectionParameter>;
 
-// <<< CUSTOM
-// END CUSTOM

@@ -21,5 +21,3 @@ pub use quality_inspection_template_validator::{QualityInspectionTemplateValidat
 pub use quality_inspection_parameter_validator::{QualityInspectionParameterValidator, quality_inspection_parameter_validator};
 pub use quality_procedure_validator::{QualityProcedureValidator, quality_procedure_validator};
 
-// <<< CUSTOM
-// END CUSTOM

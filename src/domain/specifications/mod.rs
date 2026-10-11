@@ -14,5 +14,3 @@ pub mod quality_inspection_template_specification;
 pub mod quality_inspection_parameter_specification;
 pub mod quality_procedure_specification;
 
-// <<< CUSTOM
-// END CUSTOM

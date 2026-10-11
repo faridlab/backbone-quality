@@ -323,7 +323,7 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionReadingDto> for Qualit
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to QualityInspectionReading here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

@@ -13,8 +13,6 @@ pub mod quality_inspection_template_handler;
 pub mod quality_inspection_parameter_handler;
 pub mod quality_procedure_handler;
 
-// <<< CUSTOM
-// END CUSTOM
 
 // Re-exports
 pub use non_conformance_handler::{create_non_conformance_routes, create_non_conformance_read_routes, create_non_conformance_write_routes};
@@ -24,5 +22,3 @@ pub use quality_inspection_reading_handler::{create_quality_inspection_reading_r
 pub use quality_inspection_template_handler::{create_quality_inspection_template_routes, create_quality_inspection_template_read_routes, create_quality_inspection_template_write_routes};
 pub use quality_inspection_parameter_handler::{create_quality_inspection_parameter_routes, create_quality_inspection_parameter_read_routes, create_quality_inspection_parameter_write_routes};
 pub use quality_procedure_handler::{create_quality_procedure_routes, create_quality_procedure_read_routes, create_quality_procedure_write_routes};
-// <<< CUSTOM
-// END CUSTOM

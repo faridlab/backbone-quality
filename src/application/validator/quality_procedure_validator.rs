@@ -17,9 +17,5 @@ pub fn quality_procedure_validator() -> QualityProcedureValidator {
     EntityValidator::new()
         .rule(RequiredString::new("procedure_name", |e: &QualityProcedure| &e.procedure_name))
         .rule(OptionalNotBlank::new("description", |e: &QualityProcedure| e.description.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

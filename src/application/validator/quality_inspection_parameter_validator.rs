@@ -17,9 +17,5 @@ pub fn quality_inspection_parameter_validator() -> QualityInspectionParameterVal
     EntityValidator::new()
         .rule(RequiredString::new("parameter_name", |e: &QualityInspectionParameter| &e.parameter_name))
         .rule(OptionalNotBlank::new("spec_text", |e: &QualityInspectionParameter| e.spec_text.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

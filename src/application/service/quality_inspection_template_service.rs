@@ -32,5 +32,3 @@ pub type QualityInspectionTemplateService = GenericCrudService<
     QualityInspectionTemplateRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

@@ -16,9 +16,5 @@ pub type QualityActionValidator = EntityValidator<QualityAction>;
 pub fn quality_action_validator() -> QualityActionValidator {
     EntityValidator::new()
         .rule(RequiredString::new("description", |e: &QualityAction| &e.description))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

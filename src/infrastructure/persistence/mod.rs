@@ -13,8 +13,6 @@ mod quality_inspection_parameter_repository;
 mod quality_procedure_repository;
 
 // Custom persistence modules
-// <<< CUSTOM
-// END CUSTOM
 
 // Re-exports
 pub use non_conformance_repository::NonConformanceRepository;
@@ -33,8 +31,6 @@ pub use backbone_orm::repository::{
 };
 
 // Re-export custom persistence types
-// <<< CUSTOM
-// END CUSTOM
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

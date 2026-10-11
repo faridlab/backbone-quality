@@ -184,8 +184,6 @@ impl QualityInspectionParameter {
         }
     }
 
-    // <<< CUSTOM METHODS START >>>
-    // <<< CUSTOM METHODS END >>>
 }
 
 impl super::Entity for QualityInspectionParameter {

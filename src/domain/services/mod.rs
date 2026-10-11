@@ -18,5 +18,3 @@ pub use quality_inspection_template_domain_policy::QualityInspectionTemplateDoma
 pub use quality_inspection_parameter_domain_policy::QualityInspectionParameterDomainPolicy;
 pub use quality_procedure_domain_policy::QualityProcedureDomainPolicy;
 
-// <<< CUSTOM
-// END CUSTOM

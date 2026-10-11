@@ -32,5 +32,3 @@ pub type NonConformanceService = GenericCrudService<
     NonConformanceRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

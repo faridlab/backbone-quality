@@ -15,8 +15,6 @@ pub mod quality_inspection_template_service;
 pub mod quality_inspection_parameter_service;
 pub mod quality_procedure_service;
 
-// <<< CUSTOM
-// END CUSTOM
 
 pub use non_conformance_service::NonConformanceService;
 pub use quality_action_service::QualityActionService;
@@ -25,8 +23,6 @@ pub use quality_inspection_reading_service::QualityInspectionReadingService;
 pub use quality_inspection_template_service::QualityInspectionTemplateService;
 pub use quality_inspection_parameter_service::QualityInspectionParameterService;
 pub use quality_procedure_service::QualityProcedureService;
-// <<< CUSTOM
-// END CUSTOM
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

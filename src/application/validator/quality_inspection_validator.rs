@@ -18,9 +18,5 @@ pub fn quality_inspection_validator() -> QualityInspectionValidator {
         .rule(OptionalNotBlank::new("source_type", |e: &QualityInspection| e.source_type.as_deref()))
         .rule(NonNegative::new("sample_size", |e: &QualityInspection| e.sample_size as i64))
         .rule(OptionalNotBlank::new("remarks", |e: &QualityInspection| e.remarks.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

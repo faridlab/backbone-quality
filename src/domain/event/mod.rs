@@ -32,5 +32,3 @@ pub use quality_inspection_parameter_event_handlers::QualityInspectionParameterE
 pub use quality_procedure_events::{QualityProcedureEvent, QualityProcedureEventPublisher, NoopQualityProcedureEventPublisher};
 pub use quality_procedure_event_handlers::QualityProcedureEventHandler;
 
-// <<< CUSTOM
-// END CUSTOM

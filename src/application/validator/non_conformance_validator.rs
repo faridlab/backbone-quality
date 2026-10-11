@@ -17,9 +17,5 @@ pub fn non_conformance_validator() -> NonConformanceValidator {
     EntityValidator::new()
         .rule(RequiredString::new("subject", |e: &NonConformance| &e.subject))
         .rule(OptionalNotBlank::new("description", |e: &NonConformance| e.description.as_deref()))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM
