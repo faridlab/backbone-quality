@@ -56,7 +56,7 @@ impl backbone_core::write_guard::WriteGuard<QualityInspection> for QualityInspec
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `item_id_required` (@required on QualityInspection.item_id)
         if (create || (update && r::changed(old.as_ref(), row, &["item_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "item_id")), r::not(r::is_empty(r::trim(r::field(row, "item_id")))))) {
@@ -64,15 +64,15 @@ impl backbone_core::write_guard::WriteGuard<QualityInspection> for QualityInspec
         }
         // `source_type_max_length` (@max(60) on QualityInspection.source_type)
         if (create || (update && r::changed(old.as_ref(), row, &["source_type"]))) && !r::holds(&r::le(r::length(r::field(row, "source_type")), r::Val::Num(60.0_f64))) {
-            shadow.push(Violation::new("source_type", "max_length", "source_type must be at most 60 characters").with_param("max", 60_i64));
+            refuse.push(Violation::new("source_type", "max_length", "source_type must be at most 60 characters").with_param("max", 60_i64));
         }
         // `sample_size_non_negative` (@non_negative on QualityInspection.sample_size)
         if (create || (update && r::changed(old.as_ref(), row, &["sample_size"]))) && !r::holds(&r::ge(r::field(row, "sample_size"), r::Val::Num(0.0_f64))) {
-            shadow.push(Violation::new("sample_size", "non_negative", "sample_size must not be negative"));
+            refuse.push(Violation::new("sample_size", "non_negative", "sample_size must not be negative"));
         }
         // `remarks_max_length` (@max(2000) on QualityInspection.remarks)
         if (create || (update && r::changed(old.as_ref(), row, &["remarks"]))) && !r::holds(&r::le(r::length(r::field(row, "remarks")), r::Val::Num(2000.0_f64))) {
-            shadow.push(Violation::new("remarks", "max_length", "remarks must be at most 2000 characters").with_param("max", 2000_i64));
+            refuse.push(Violation::new("remarks", "max_length", "remarks must be at most 2000 characters").with_param("max", 2000_i64));
         }
         GuardOutcome { refuse, shadow }
     }

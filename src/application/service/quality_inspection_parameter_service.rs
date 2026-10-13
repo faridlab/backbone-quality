@@ -56,7 +56,7 @@ impl backbone_core::write_guard::WriteGuard<QualityInspectionParameter> for Qual
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `template_id_required` (@required on QualityInspectionParameter.template_id)
         if (create || (update && r::changed(old.as_ref(), row, &["template_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "template_id")), r::not(r::is_empty(r::trim(r::field(row, "template_id")))))) {
@@ -68,11 +68,11 @@ impl backbone_core::write_guard::WriteGuard<QualityInspectionParameter> for Qual
         }
         // `parameter_name_max_length` (@max(140) on QualityInspectionParameter.parameter_name)
         if (create || (update && r::changed(old.as_ref(), row, &["parameter_name"]))) && !r::holds(&r::le(r::length(r::field(row, "parameter_name")), r::Val::Num(140.0_f64))) {
-            shadow.push(Violation::new("parameter_name", "max_length", "parameter_name must be at most 140 characters").with_param("max", 140_i64));
+            refuse.push(Violation::new("parameter_name", "max_length", "parameter_name must be at most 140 characters").with_param("max", 140_i64));
         }
         // `spec_text_max_length` (@max(280) on QualityInspectionParameter.spec_text)
         if (create || (update && r::changed(old.as_ref(), row, &["spec_text"]))) && !r::holds(&r::le(r::length(r::field(row, "spec_text")), r::Val::Num(280.0_f64))) {
-            shadow.push(Violation::new("spec_text", "max_length", "spec_text must be at most 280 characters").with_param("max", 280_i64));
+            refuse.push(Violation::new("spec_text", "max_length", "spec_text must be at most 280 characters").with_param("max", 280_i64));
         }
         GuardOutcome { refuse, shadow }
     }
