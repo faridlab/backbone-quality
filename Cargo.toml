@@ -1,6 +1,6 @@
 [package]
 name = "backbone-quality"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 description = "Quality management: inspection templates and inspections, non-conformances, corrective actions and quality procedures"
 license = "MIT OR Apache-2.0"
