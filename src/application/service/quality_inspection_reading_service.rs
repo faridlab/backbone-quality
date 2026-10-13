@@ -32,3 +32,49 @@ pub type QualityInspectionReadingService = GenericCrudService<
     QualityInspectionReadingRepository,
 >;
 
+/// The rules the schema declares for QualityInspectionReading, checked against the row a create or update
+/// would store. The generated build attaches it to [`QualityInspectionReadingService`]. A refusing rule's
+/// break answers 422; a rule in shadow is logged under `backbone::write_guard` and the
+/// write goes ahead.
+pub struct QualityInspectionReadingRowRules;
+
+#[async_trait::async_trait]
+impl backbone_core::write_guard::WriteGuard<QualityInspectionReading> for QualityInspectionReadingRowRules {
+    async fn check(
+        &self,
+        ctx: &backbone_core::write_guard::WriteCtx<'_, QualityInspectionReading>,
+    ) -> backbone_core::write_guard::GuardOutcome {
+        use backbone_core::row_rule as r;
+        use backbone_core::violation::Violation;
+        use backbone_core::write_guard::{GuardOutcome, WriteKind};
+        let (create, update) = (ctx.kind == WriteKind::Create, ctx.kind == WriteKind::Update);
+        let Some(after) = ctx.after.filter(|_| create || update) else {
+            return GuardOutcome::allow();
+        };
+        let Ok(row) = serde_json::to_value(after) else {
+            return GuardOutcome::allow();
+        };
+        let row = &row;
+        let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
+        let mut shadow = Vec::new();
+        let mut refuse = Vec::new();
+        // `inspection_id_required` (@required on QualityInspectionReading.inspection_id)
+        if (create || (update && r::changed(old.as_ref(), row, &["inspection_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "inspection_id")), r::not(r::is_empty(r::trim(r::field(row, "inspection_id")))))) {
+            refuse.push(Violation::new("inspection_id", "required", "inspection_id is required"));
+        }
+        // `parameter_name_required` (@required on QualityInspectionReading.parameter_name)
+        if (create || (update && r::changed(old.as_ref(), row, &["parameter_name"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "parameter_name")), r::not(r::is_empty(r::trim(r::field(row, "parameter_name")))))) {
+            refuse.push(Violation::new("parameter_name", "required", "parameter_name is required"));
+        }
+        // `parameter_name_max_length` (@max(140) on QualityInspectionReading.parameter_name)
+        if (create || (update && r::changed(old.as_ref(), row, &["parameter_name"]))) && !r::holds(&r::le(r::length(r::field(row, "parameter_name")), r::Val::Num(140.0_f64))) {
+            shadow.push(Violation::new("parameter_name", "max_length", "parameter_name must be at most 140 characters").with_param("max", 140_i64));
+        }
+        // `remarks_max_length` (@max(280) on QualityInspectionReading.remarks)
+        if (create || (update && r::changed(old.as_ref(), row, &["remarks"]))) && !r::holds(&r::le(r::length(r::field(row, "remarks")), r::Val::Num(280.0_f64))) {
+            shadow.push(Violation::new("remarks", "max_length", "remarks must be at most 280 characters").with_param("max", 280_i64));
+        }
+        GuardOutcome { refuse, shadow }
+    }
+}
+

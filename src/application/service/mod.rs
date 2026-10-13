@@ -23,6 +23,13 @@ pub use quality_inspection_reading_service::QualityInspectionReadingService;
 pub use quality_inspection_template_service::QualityInspectionTemplateService;
 pub use quality_inspection_parameter_service::QualityInspectionParameterService;
 pub use quality_procedure_service::QualityProcedureService;
+pub use non_conformance_service::NonConformanceRowRules;
+pub use quality_action_service::QualityActionRowRules;
+pub use quality_inspection_service::QualityInspectionRowRules;
+pub use quality_inspection_reading_service::QualityInspectionReadingRowRules;
+pub use quality_inspection_template_service::QualityInspectionTemplateRowRules;
+pub use quality_inspection_parameter_service::QualityInspectionParameterRowRules;
+pub use quality_procedure_service::QualityProcedureRowRules;
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

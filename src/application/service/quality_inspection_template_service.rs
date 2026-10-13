@@ -32,3 +32,41 @@ pub type QualityInspectionTemplateService = GenericCrudService<
     QualityInspectionTemplateRepository,
 >;
 
+/// The rules the schema declares for QualityInspectionTemplate, checked against the row a create or update
+/// would store. The generated build attaches it to [`QualityInspectionTemplateService`]. A refusing rule's
+/// break answers 422; a rule in shadow is logged under `backbone::write_guard` and the
+/// write goes ahead.
+pub struct QualityInspectionTemplateRowRules;
+
+#[async_trait::async_trait]
+impl backbone_core::write_guard::WriteGuard<QualityInspectionTemplate> for QualityInspectionTemplateRowRules {
+    async fn check(
+        &self,
+        ctx: &backbone_core::write_guard::WriteCtx<'_, QualityInspectionTemplate>,
+    ) -> backbone_core::write_guard::GuardOutcome {
+        use backbone_core::row_rule as r;
+        use backbone_core::violation::Violation;
+        use backbone_core::write_guard::{GuardOutcome, WriteKind};
+        let (create, update) = (ctx.kind == WriteKind::Create, ctx.kind == WriteKind::Update);
+        let Some(after) = ctx.after.filter(|_| create || update) else {
+            return GuardOutcome::allow();
+        };
+        let Ok(row) = serde_json::to_value(after) else {
+            return GuardOutcome::allow();
+        };
+        let row = &row;
+        let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
+        let mut shadow = Vec::new();
+        let mut refuse = Vec::new();
+        // `template_name_required` (@required on QualityInspectionTemplate.template_name)
+        if (create || (update && r::changed(old.as_ref(), row, &["template_name"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "template_name")), r::not(r::is_empty(r::trim(r::field(row, "template_name")))))) {
+            refuse.push(Violation::new("template_name", "required", "template_name is required"));
+        }
+        // `template_name_max_length` (@max(140) on QualityInspectionTemplate.template_name)
+        if (create || (update && r::changed(old.as_ref(), row, &["template_name"]))) && !r::holds(&r::le(r::length(r::field(row, "template_name")), r::Val::Num(140.0_f64))) {
+            shadow.push(Violation::new("template_name", "max_length", "template_name must be at most 140 characters").with_param("max", 140_i64));
+        }
+        GuardOutcome { refuse, shadow }
+    }
+}
+
