@@ -267,6 +267,9 @@ impl backbone_orm::EntityRepoMeta for QualityInspectionReading {
     fn search_fields() -> &'static [&'static str] {
         &["parameter_name"]
     }
+    fn relations() -> &'static [(&'static str, &'static str, &'static str)] {
+        &[("inspection", "quality_inspections", "inspectionId")]
+    }
 }
 
 /// Builder for QualityInspectionReading entity

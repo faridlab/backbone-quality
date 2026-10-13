@@ -237,6 +237,9 @@ impl backbone_orm::EntityRepoMeta for QualityInspectionParameter {
     fn search_fields() -> &'static [&'static str] {
         &["parameter_name"]
     }
+    fn relations() -> &'static [(&'static str, &'static str, &'static str)] {
+        &[("template", "quality_inspection_templates", "templateId")]
+    }
 }
 
 /// Builder for QualityInspectionParameter entity

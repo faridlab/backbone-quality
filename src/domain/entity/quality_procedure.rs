@@ -228,6 +228,9 @@ impl backbone_orm::EntityRepoMeta for QualityProcedure {
     fn search_fields() -> &'static [&'static str] {
         &["procedure_name"]
     }
+    fn relations() -> &'static [(&'static str, &'static str, &'static str)] {
+        &[("parentProcedure", "quality_procedures", "parentProcedureId")]
+    }
 }
 
 /// Builder for QualityProcedure entity

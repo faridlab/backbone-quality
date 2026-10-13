@@ -254,6 +254,9 @@ impl backbone_orm::EntityRepoMeta for QualityAction {
     fn search_fields() -> &'static [&'static str] {
         &["description"]
     }
+    fn relations() -> &'static [(&'static str, &'static str, &'static str)] {
+        &[("nonConformance", "non_conformances", "nonConformanceId")]
+    }
 }
 
 /// Builder for QualityAction entity
