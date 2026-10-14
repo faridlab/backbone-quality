@@ -31,5 +31,61 @@ pub use quality_inspection_template_service::QualityInspectionTemplateRowRules;
 pub use quality_inspection_parameter_service::QualityInspectionParameterRowRules;
 pub use quality_procedure_service::QualityProcedureRowRules;
 
+/// A `NonConformanceService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_non_conformance_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::NonConformanceRepository>,
+) -> NonConformanceService {
+    NonConformanceService::with_repository(repository).with_guard(std::sync::Arc::new(NonConformanceRowRules))
+}
+
+/// A `QualityActionService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_quality_action_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::QualityActionRepository>,
+) -> QualityActionService {
+    QualityActionService::with_repository(repository).with_guard(std::sync::Arc::new(QualityActionRowRules))
+}
+
+/// A `QualityInspectionService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_quality_inspection_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::QualityInspectionRepository>,
+) -> QualityInspectionService {
+    QualityInspectionService::with_repository(repository).with_guard(std::sync::Arc::new(QualityInspectionRowRules))
+}
+
+/// A `QualityInspectionReadingService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_quality_inspection_reading_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::QualityInspectionReadingRepository>,
+) -> QualityInspectionReadingService {
+    QualityInspectionReadingService::with_repository(repository).with_guard(std::sync::Arc::new(QualityInspectionReadingRowRules))
+}
+
+/// A `QualityInspectionTemplateService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_quality_inspection_template_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::QualityInspectionTemplateRepository>,
+) -> QualityInspectionTemplateService {
+    QualityInspectionTemplateService::with_repository(repository).with_guard(std::sync::Arc::new(QualityInspectionTemplateRowRules))
+}
+
+/// A `QualityInspectionParameterService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_quality_inspection_parameter_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::QualityInspectionParameterRepository>,
+) -> QualityInspectionParameterService {
+    QualityInspectionParameterService::with_repository(repository).with_guard(std::sync::Arc::new(QualityInspectionParameterRowRules))
+}
+
+/// A `QualityProcedureService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_quality_procedure_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::QualityProcedureRepository>,
+) -> QualityProcedureService {
+    QualityProcedureService::with_repository(repository).with_guard(std::sync::Arc::new(QualityProcedureRowRules))
+}
+
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

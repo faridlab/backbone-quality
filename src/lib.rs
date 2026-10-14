@@ -167,31 +167,31 @@ impl QualityModuleBuilder {
 
         // NonConformance service
         let non_conformance_repository = Arc::new(NonConformanceRepository::new(db_pool.clone()));
-        let non_conformance_service = Arc::new(NonConformanceService::with_repository(non_conformance_repository.clone()).with_guard(Arc::new(crate::application::service::NonConformanceRowRules)));
+        let non_conformance_service = Arc::new(crate::application::service::build_non_conformance_service(non_conformance_repository.clone()));
 
         // QualityAction service
         let quality_action_repository = Arc::new(QualityActionRepository::new(db_pool.clone()));
-        let quality_action_service = Arc::new(QualityActionService::with_repository(quality_action_repository.clone()).with_guard(Arc::new(crate::application::service::QualityActionRowRules)));
+        let quality_action_service = Arc::new(crate::application::service::build_quality_action_service(quality_action_repository.clone()));
 
         // QualityInspection service
         let quality_inspection_repository = Arc::new(QualityInspectionRepository::new(db_pool.clone()));
-        let quality_inspection_service = Arc::new(QualityInspectionService::with_repository(quality_inspection_repository.clone()).with_guard(Arc::new(crate::application::service::QualityInspectionRowRules)));
+        let quality_inspection_service = Arc::new(crate::application::service::build_quality_inspection_service(quality_inspection_repository.clone()));
 
         // QualityInspectionReading service
         let quality_inspection_reading_repository = Arc::new(QualityInspectionReadingRepository::new(db_pool.clone()));
-        let quality_inspection_reading_service = Arc::new(QualityInspectionReadingService::with_repository(quality_inspection_reading_repository.clone()).with_guard(Arc::new(crate::application::service::QualityInspectionReadingRowRules)));
+        let quality_inspection_reading_service = Arc::new(crate::application::service::build_quality_inspection_reading_service(quality_inspection_reading_repository.clone()));
 
         // QualityInspectionTemplate service
         let quality_inspection_template_repository = Arc::new(QualityInspectionTemplateRepository::new(db_pool.clone()));
-        let quality_inspection_template_service = Arc::new(QualityInspectionTemplateService::with_repository(quality_inspection_template_repository.clone()).with_guard(Arc::new(crate::application::service::QualityInspectionTemplateRowRules)));
+        let quality_inspection_template_service = Arc::new(crate::application::service::build_quality_inspection_template_service(quality_inspection_template_repository.clone()));
 
         // QualityInspectionParameter service
         let quality_inspection_parameter_repository = Arc::new(QualityInspectionParameterRepository::new(db_pool.clone()));
-        let quality_inspection_parameter_service = Arc::new(QualityInspectionParameterService::with_repository(quality_inspection_parameter_repository.clone()).with_guard(Arc::new(crate::application::service::QualityInspectionParameterRowRules)));
+        let quality_inspection_parameter_service = Arc::new(crate::application::service::build_quality_inspection_parameter_service(quality_inspection_parameter_repository.clone()));
 
         // QualityProcedure service
         let quality_procedure_repository = Arc::new(QualityProcedureRepository::new(db_pool.clone()));
-        let quality_procedure_service = Arc::new(QualityProcedureService::with_repository(quality_procedure_repository.clone()).with_guard(Arc::new(crate::application::service::QualityProcedureRowRules)));
+        let quality_procedure_service = Arc::new(crate::application::service::build_quality_procedure_service(quality_procedure_repository.clone()));
 
         // <<< CUSTOM
         // END CUSTOM
