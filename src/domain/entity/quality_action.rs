@@ -211,6 +211,12 @@ impl super::Entity for QualityAction {
 }
 
 impl backbone_core::PersistentEntity for QualityAction {
+    fn references() -> &'static [backbone_core::Reference] {
+        const REFERENCES: &[backbone_core::Reference] = &[
+            backbone_core::Reference::new("non_conformance_id", "quality.non_conformances", "id"),
+        ];
+        REFERENCES
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

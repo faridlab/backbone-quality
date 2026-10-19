@@ -228,6 +228,12 @@ impl super::Entity for QualityInspectionReading {
 }
 
 impl backbone_core::PersistentEntity for QualityInspectionReading {
+    fn references() -> &'static [backbone_core::Reference] {
+        const REFERENCES: &[backbone_core::Reference] = &[
+            backbone_core::Reference::new("inspection_id", "quality.quality_inspections", "id"),
+        ];
+        REFERENCES
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

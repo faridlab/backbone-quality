@@ -189,6 +189,12 @@ impl super::Entity for QualityProcedure {
 }
 
 impl backbone_core::PersistentEntity for QualityProcedure {
+    fn references() -> &'static [backbone_core::Reference] {
+        const REFERENCES: &[backbone_core::Reference] = &[
+            backbone_core::Reference::new("parent_procedure_id", "quality.quality_procedures", "id"),
+        ];
+        REFERENCES
+    }
     fn entity_id(&self) -> String {
         self.id.to_string()
     }

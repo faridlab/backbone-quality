@@ -37,6 +37,7 @@ pub struct CreateQualityInspectionReadingDto {
     #[serde(alias = "parameter_name")]
     pub parameter_name: String,
     #[cfg_attr(feature = "openapi", schema(example = true))]
+    #[serde(default = "default_create_quality_inspection_reading_numeric")]
     pub numeric: bool,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "reading_value")]
     pub reading_value: Option<Decimal>,
@@ -46,9 +47,18 @@ pub struct CreateQualityInspectionReadingDto {
     pub max_value: Option<Decimal>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "manual_result")]
     pub manual_result: Option<bool>,
+    #[serde(default = "default_create_quality_inspection_reading_result")]
     pub result: ReadingResult,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub remarks: Option<String>,
+}
+
+fn default_create_quality_inspection_reading_numeric() -> bool {
+    true
+}
+
+fn default_create_quality_inspection_reading_result() -> ReadingResult {
+    ReadingResult::Accepted
 }
 
 // =============================================================================
@@ -105,18 +115,18 @@ pub struct PatchQualityInspectionReadingDto {
     #[cfg_attr(feature = "openapi", schema(example = true))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub numeric: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "reading_value")]
-    pub reading_value: Option<Decimal>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "min_value")]
-    pub min_value: Option<Decimal>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "max_value")]
-    pub max_value: Option<Decimal>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "manual_result")]
-    pub manual_result: Option<bool>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "reading_value")]
+    pub reading_value: Option<Option<Decimal>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "min_value")]
+    pub min_value: Option<Option<Decimal>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "max_value")]
+    pub max_value: Option<Option<Decimal>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "manual_result")]
+    pub manual_result: Option<Option<bool>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<ReadingResult>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remarks: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub remarks: Option<Option<String>>,
 }
 
 impl PatchQualityInspectionReadingDto {
@@ -306,12 +316,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionReadingDto> for Qualit
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to QualityInspectionReading here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

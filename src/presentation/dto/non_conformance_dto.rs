@@ -36,7 +36,9 @@ pub struct CreateNonConformanceDto {
     pub source_inspection_id: Option<Uuid>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "item_id")]
     pub item_id: Option<Uuid>,
+    #[serde(default = "default_create_non_conformance_severity")]
     pub severity: NonConformanceSeverity,
+    #[serde(default = "default_create_non_conformance_status")]
     pub status: NonConformanceStatus,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -45,6 +47,14 @@ pub struct CreateNonConformanceDto {
     pub opened_at: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "closed_at")]
     pub closed_at: Option<DateTime<Utc>>,
+}
+
+fn default_create_non_conformance_severity() -> NonConformanceSeverity {
+    NonConformanceSeverity::Medium
+}
+
+fn default_create_non_conformance_status() -> NonConformanceStatus {
+    NonConformanceStatus::Open
 }
 
 // =============================================================================
@@ -91,21 +101,21 @@ pub struct PatchNonConformanceDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "source_inspection_id")]
-    pub source_inspection_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "item_id")]
-    pub item_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "source_inspection_id")]
+    pub source_inspection_id: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "item_id")]
+    pub item_id: Option<Option<Uuid>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub severity: Option<NonConformanceSeverity>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<NonConformanceStatus>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub description: Option<Option<String>>,
     #[cfg_attr(feature = "openapi", schema(example = "2024-01-01T00:00:00Z"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "opened_at")]
     pub opened_at: Option<DateTime<Utc>>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "closed_at")]
-    pub closed_at: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "closed_at")]
+    pub closed_at: Option<Option<DateTime<Utc>>>,
 }
 
 impl PatchNonConformanceDto {
@@ -289,12 +299,4 @@ impl backbone_core::ApplyUpdateDto<UpdateNonConformanceDto> for NonConformance {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to NonConformance here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

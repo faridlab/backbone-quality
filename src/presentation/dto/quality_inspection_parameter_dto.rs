@@ -36,6 +36,7 @@ pub struct CreateQualityInspectionParameterDto {
     #[serde(alias = "parameter_name")]
     pub parameter_name: String,
     #[cfg_attr(feature = "openapi", schema(example = true))]
+    #[serde(default = "default_create_quality_inspection_parameter_numeric")]
     pub numeric: bool,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "min_value")]
     pub min_value: Option<Decimal>,
@@ -43,6 +44,10 @@ pub struct CreateQualityInspectionParameterDto {
     pub max_value: Option<Decimal>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "spec_text")]
     pub spec_text: Option<String>,
+}
+
+fn default_create_quality_inspection_parameter_numeric() -> bool {
+    true
 }
 
 // =============================================================================
@@ -94,12 +99,12 @@ pub struct PatchQualityInspectionParameterDto {
     #[cfg_attr(feature = "openapi", schema(example = true))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub numeric: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "min_value")]
-    pub min_value: Option<Decimal>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "max_value")]
-    pub max_value: Option<Decimal>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "spec_text")]
-    pub spec_text: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "min_value")]
+    pub min_value: Option<Option<Decimal>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "max_value")]
+    pub max_value: Option<Option<Decimal>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "spec_text")]
+    pub spec_text: Option<Option<String>>,
 }
 
 impl PatchQualityInspectionParameterDto {
@@ -274,12 +279,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionParameterDto> for Qual
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to QualityInspectionParameter here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

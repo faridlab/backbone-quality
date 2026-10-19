@@ -34,7 +34,12 @@ pub struct CreateQualityInspectionTemplateDto {
     pub template_name: String,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "item_id")]
     pub item_id: Option<Uuid>,
+    #[serde(default = "default_create_quality_inspection_template_status")]
     pub status: QualityInspectionTemplateStatus,
+}
+
+fn default_create_quality_inspection_template_status() -> QualityInspectionTemplateStatus {
+    QualityInspectionTemplateStatus::Active
 }
 
 // =============================================================================
@@ -72,8 +77,8 @@ pub struct PatchQualityInspectionTemplateDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "template_name")]
     pub template_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "item_id")]
-    pub item_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "item_id")]
+    pub item_id: Option<Option<Uuid>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<QualityInspectionTemplateStatus>,
 }
@@ -233,12 +238,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionTemplateDto> for Quali
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to QualityInspectionTemplate here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

@@ -81,6 +81,13 @@ impl axum::response::IntoResponse for QualityActionError {
 // Route Configuration
 // =============================================================================
 
+/// The permissions this entity's generic routes require: `quality_action:<action>` for `read`, `create`,
+/// `update`, `delete`, `restore` and `purge`, with any rename the schema's `requires:` declares.
+pub fn quality_action_permissions() -> backbone_core::http::CrudPermissions {
+    backbone_core::http::CrudPermissions::new("quality_action")
+        .in_module("quality")
+}
+
 /// Create Axum router with all 16 Backbone endpoints for QualityAction.
 ///
 /// # Routes
@@ -110,21 +117,23 @@ impl axum::response::IntoResponse for QualityActionError {
 /// let router = create_quality_action_routes(service);
 /// ```
 pub fn create_quality_action_routes(service: Arc<QualityActionService>) -> Router {
-    BackboneCrudHandler::<QualityActionService, QualityAction, CreateQualityActionDto, UpdateQualityActionDto, QualityActionResponseDto>::routes(
+    BackboneCrudHandler::<QualityActionService, QualityAction, CreateQualityActionDto, UpdateQualityActionDto, QualityActionResponseDto>::routes_guarded(
         service,
         "/quality_actions",
+        quality_action_permissions(),
     )
 }
 
 /// Create Axum router with only the read (GET) endpoints for QualityAction.
 ///
-/// Safe for public, unauthenticated exposure (e.g., reference data).
+/// Each route requires the entity's `read` permission, so it needs an authenticated caller.
 /// Mutations must be served separately via `create_quality_action_write_routes`,
 /// typically wrapped in an auth middleware layer.
 pub fn create_quality_action_read_routes(service: Arc<QualityActionService>) -> Router {
-    BackboneCrudHandler::<QualityActionService, QualityAction, CreateQualityActionDto, UpdateQualityActionDto, QualityActionResponseDto>::read_routes(
+    BackboneCrudHandler::<QualityActionService, QualityAction, CreateQualityActionDto, UpdateQualityActionDto, QualityActionResponseDto>::read_routes_guarded(
         service,
         "/quality_actions",
+        quality_action_permissions(),
     )
 }
 
@@ -140,9 +149,10 @@ pub fn create_quality_action_read_routes(service: Arc<QualityActionService>) -> 
 /// service (e.g. a command router over its domain engine), serve THAT instead
 /// for any mutation that must respect domain rules.
 pub fn create_quality_action_write_routes(service: Arc<QualityActionService>) -> Router {
-    BackboneCrudHandler::<QualityActionService, QualityAction, CreateQualityActionDto, UpdateQualityActionDto, QualityActionResponseDto>::write_routes(
+    BackboneCrudHandler::<QualityActionService, QualityAction, CreateQualityActionDto, UpdateQualityActionDto, QualityActionResponseDto>::write_routes_guarded(
         service,
         "/quality_actions",
+        quality_action_permissions(),
     )
 }
 

@@ -2650,10 +2650,7 @@ components:
       type: object
       required:
         - subject
-        - severity
-        - status
         - opened_at
-        - metadata
       properties:
         subject:
           type: string
@@ -2681,8 +2678,6 @@ components:
           nullable: true
           type: string
           format: date-time
-        metadata:
-          type: object
 
     UpdateNonConformanceRequest:
       type: object
@@ -2691,7 +2686,6 @@ components:
         - severity
         - status
         - opened_at
-        - metadata
       properties:
         subject:
           type: string
@@ -2719,8 +2713,6 @@ components:
           nullable: true
           type: string
           format: date-time
-        metadata:
-          type: object
 
     PatchNonConformanceRequest:
       type: object
@@ -2751,8 +2743,6 @@ components:
           nullable: true
           type: string
           format: date-time
-        metadata:
-          type: object
 
     NonConformanceList:
       type: object
@@ -2819,10 +2809,7 @@ components:
       type: object
       required:
         - non_conformance_id
-        - action_type
-        - status
         - description
-        - metadata
       properties:
         non_conformance_id:
           type: string
@@ -2846,8 +2833,6 @@ components:
           nullable: true
           type: string
           format: date-time
-        metadata:
-          type: object
 
     UpdateQualityActionRequest:
       type: object
@@ -2856,7 +2841,6 @@ components:
         - action_type
         - status
         - description
-        - metadata
       properties:
         non_conformance_id:
           type: string
@@ -2880,8 +2864,6 @@ components:
           nullable: true
           type: string
           format: date-time
-        metadata:
-          type: object
 
     PatchQualityActionRequest:
       type: object
@@ -2908,8 +2890,6 @@ components:
           nullable: true
           type: string
           format: date-time
-        metadata:
-          type: object
 
     QualityActionList:
       type: object
@@ -2984,11 +2964,7 @@ components:
       type: object
       required:
         - item_id
-        - inspection_type
-        - sample_size
         - inspected_at
-        - status
-        - metadata
       properties:
         template_id:
           nullable: true
@@ -3019,8 +2995,6 @@ components:
           nullable: true
           type: string
           maxLength: 2000
-        metadata:
-          type: object
 
     UpdateQualityInspectionRequest:
       type: object
@@ -3030,7 +3004,6 @@ components:
         - sample_size
         - inspected_at
         - status
-        - metadata
       properties:
         template_id:
           nullable: true
@@ -3061,8 +3034,6 @@ components:
           nullable: true
           type: string
           maxLength: 2000
-        metadata:
-          type: object
 
     PatchQualityInspectionRequest:
       type: object
@@ -3096,8 +3067,6 @@ components:
           nullable: true
           type: string
           maxLength: 2000
-        metadata:
-          type: object
 
     QualityInspectionList:
       type: object
@@ -3169,9 +3138,6 @@ components:
       required:
         - inspection_id
         - parameter_name
-        - numeric
-        - result
-        - metadata
       properties:
         inspection_id:
           type: string
@@ -3199,8 +3165,6 @@ components:
           nullable: true
           type: string
           maxLength: 280
-        metadata:
-          type: object
 
     UpdateQualityInspectionReadingRequest:
       type: object
@@ -3209,7 +3173,6 @@ components:
         - parameter_name
         - numeric
         - result
-        - metadata
       properties:
         inspection_id:
           type: string
@@ -3237,8 +3200,6 @@ components:
           nullable: true
           type: string
           maxLength: 280
-        metadata:
-          type: object
 
     PatchQualityInspectionReadingRequest:
       type: object
@@ -3269,8 +3230,6 @@ components:
           nullable: true
           type: string
           maxLength: 280
-        metadata:
-          type: object
 
     QualityInspectionReadingList:
       type: object
@@ -3322,8 +3281,6 @@ components:
       type: object
       required:
         - template_name
-        - status
-        - metadata
       properties:
         template_name:
           type: string
@@ -3334,15 +3291,12 @@ components:
           format: uuid
         status:
           type: string
-        metadata:
-          type: object
 
     UpdateQualityInspectionTemplateRequest:
       type: object
       required:
         - template_name
         - status
-        - metadata
       properties:
         template_name:
           type: string
@@ -3353,8 +3307,6 @@ components:
           format: uuid
         status:
           type: string
-        metadata:
-          type: object
 
     PatchQualityInspectionTemplateRequest:
       type: object
@@ -3368,8 +3320,6 @@ components:
           format: uuid
         status:
           type: string
-        metadata:
-          type: object
 
     QualityInspectionTemplateList:
       type: object
@@ -3432,8 +3382,6 @@ components:
       required:
         - template_id
         - parameter_name
-        - numeric
-        - metadata
       properties:
         template_id:
           type: string
@@ -3453,8 +3401,6 @@ components:
           nullable: true
           type: string
           maxLength: 280
-        metadata:
-          type: object
 
     UpdateQualityInspectionParameterRequest:
       type: object
@@ -3462,7 +3408,6 @@ components:
         - template_id
         - parameter_name
         - numeric
-        - metadata
       properties:
         template_id:
           type: string
@@ -3482,8 +3427,6 @@ components:
           nullable: true
           type: string
           maxLength: 280
-        metadata:
-          type: object
 
     PatchQualityInspectionParameterRequest:
       type: object
@@ -3506,8 +3449,6 @@ components:
           nullable: true
           type: string
           maxLength: 280
-        metadata:
-          type: object
 
     QualityInspectionParameterList:
       type: object
@@ -3563,8 +3504,6 @@ components:
       type: object
       required:
         - procedure_name
-        - status
-        - metadata
       properties:
         procedure_name:
           type: string
@@ -3579,15 +3518,12 @@ components:
           maxLength: 4000
         status:
           type: string
-        metadata:
-          type: object
 
     UpdateQualityProcedureRequest:
       type: object
       required:
         - procedure_name
         - status
-        - metadata
       properties:
         procedure_name:
           type: string
@@ -3602,8 +3538,6 @@ components:
           maxLength: 4000
         status:
           type: string
-        metadata:
-          type: object
 
     PatchQualityProcedureRequest:
       type: object
@@ -3621,8 +3555,6 @@ components:
           maxLength: 4000
         status:
           type: string
-        metadata:
-          type: object
 
     QualityProcedureList:
       type: object

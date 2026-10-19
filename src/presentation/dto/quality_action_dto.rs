@@ -33,10 +33,11 @@ pub struct CreateQualityActionDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "non_conformance_id")]
     pub non_conformance_id: Uuid,
-    #[serde(alias = "action_type")]
+    #[serde(default = "default_create_quality_action_action_type", alias = "action_type")]
     pub action_type: QualityActionType,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "procedure_id")]
     pub procedure_id: Option<Uuid>,
+    #[serde(default = "default_create_quality_action_status")]
     pub status: QualityActionStatus,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     pub description: String,
@@ -44,6 +45,14 @@ pub struct CreateQualityActionDto {
     pub due_date: Option<DateTime<Utc>>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "completed_at")]
     pub completed_at: Option<DateTime<Utc>>,
+}
+
+fn default_create_quality_action_action_type() -> QualityActionType {
+    QualityActionType::Corrective
+}
+
+fn default_create_quality_action_status() -> QualityActionStatus {
+    QualityActionStatus::Open
 }
 
 // =============================================================================
@@ -91,17 +100,17 @@ pub struct PatchQualityActionDto {
     pub non_conformance_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "action_type")]
     pub action_type: Option<QualityActionType>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "procedure_id")]
-    pub procedure_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "procedure_id")]
+    pub procedure_id: Option<Option<Uuid>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<QualityActionStatus>,
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "due_date")]
-    pub due_date: Option<DateTime<Utc>>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "completed_at")]
-    pub completed_at: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "due_date")]
+    pub due_date: Option<Option<DateTime<Utc>>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "completed_at")]
+    pub completed_at: Option<Option<DateTime<Utc>>>,
 }
 
 impl PatchQualityActionDto {
@@ -280,12 +289,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityActionDto> for QualityAction {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to QualityAction here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

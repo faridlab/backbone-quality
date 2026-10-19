@@ -81,6 +81,13 @@ impl axum::response::IntoResponse for QualityInspectionParameterError {
 // Route Configuration
 // =============================================================================
 
+/// The permissions this entity's generic routes require: `quality_inspection_parameter:<action>` for `read`, `create`,
+/// `update`, `delete`, `restore` and `purge`, with any rename the schema's `requires:` declares.
+pub fn quality_inspection_parameter_permissions() -> backbone_core::http::CrudPermissions {
+    backbone_core::http::CrudPermissions::new("quality_inspection_parameter")
+        .in_module("quality")
+}
+
 /// Create Axum router with all 16 Backbone endpoints for QualityInspectionParameter.
 ///
 /// # Routes
@@ -110,21 +117,23 @@ impl axum::response::IntoResponse for QualityInspectionParameterError {
 /// let router = create_quality_inspection_parameter_routes(service);
 /// ```
 pub fn create_quality_inspection_parameter_routes(service: Arc<QualityInspectionParameterService>) -> Router {
-    BackboneCrudHandler::<QualityInspectionParameterService, QualityInspectionParameter, CreateQualityInspectionParameterDto, UpdateQualityInspectionParameterDto, QualityInspectionParameterResponseDto>::routes(
+    BackboneCrudHandler::<QualityInspectionParameterService, QualityInspectionParameter, CreateQualityInspectionParameterDto, UpdateQualityInspectionParameterDto, QualityInspectionParameterResponseDto>::routes_guarded(
         service,
         "/quality_inspection_parameters",
+        quality_inspection_parameter_permissions(),
     )
 }
 
 /// Create Axum router with only the read (GET) endpoints for QualityInspectionParameter.
 ///
-/// Safe for public, unauthenticated exposure (e.g., reference data).
+/// Each route requires the entity's `read` permission, so it needs an authenticated caller.
 /// Mutations must be served separately via `create_quality_inspection_parameter_write_routes`,
 /// typically wrapped in an auth middleware layer.
 pub fn create_quality_inspection_parameter_read_routes(service: Arc<QualityInspectionParameterService>) -> Router {
-    BackboneCrudHandler::<QualityInspectionParameterService, QualityInspectionParameter, CreateQualityInspectionParameterDto, UpdateQualityInspectionParameterDto, QualityInspectionParameterResponseDto>::read_routes(
+    BackboneCrudHandler::<QualityInspectionParameterService, QualityInspectionParameter, CreateQualityInspectionParameterDto, UpdateQualityInspectionParameterDto, QualityInspectionParameterResponseDto>::read_routes_guarded(
         service,
         "/quality_inspection_parameters",
+        quality_inspection_parameter_permissions(),
     )
 }
 
@@ -140,9 +149,10 @@ pub fn create_quality_inspection_parameter_read_routes(service: Arc<QualityInspe
 /// service (e.g. a command router over its domain engine), serve THAT instead
 /// for any mutation that must respect domain rules.
 pub fn create_quality_inspection_parameter_write_routes(service: Arc<QualityInspectionParameterService>) -> Router {
-    BackboneCrudHandler::<QualityInspectionParameterService, QualityInspectionParameter, CreateQualityInspectionParameterDto, UpdateQualityInspectionParameterDto, QualityInspectionParameterResponseDto>::write_routes(
+    BackboneCrudHandler::<QualityInspectionParameterService, QualityInspectionParameter, CreateQualityInspectionParameterDto, UpdateQualityInspectionParameterDto, QualityInspectionParameterResponseDto>::write_routes_guarded(
         service,
         "/quality_inspection_parameters",
+        quality_inspection_parameter_permissions(),
     )
 }
 

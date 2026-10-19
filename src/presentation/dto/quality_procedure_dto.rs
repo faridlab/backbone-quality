@@ -36,7 +36,12 @@ pub struct CreateQualityProcedureDto {
     pub parent_procedure_id: Option<Uuid>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(default = "default_create_quality_procedure_status")]
     pub status: QualityProcedureStatus,
+}
+
+fn default_create_quality_procedure_status() -> QualityProcedureStatus {
+    QualityProcedureStatus::Active
 }
 
 // =============================================================================
@@ -76,10 +81,10 @@ pub struct PatchQualityProcedureDto {
     #[cfg_attr(feature = "openapi", schema(example = "example"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "procedure_name")]
     pub procedure_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "parent_procedure_id")]
-    pub parent_procedure_id: Option<Uuid>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "parent_procedure_id")]
+    pub parent_procedure_id: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub description: Option<Option<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<QualityProcedureStatus>,
 }
@@ -244,12 +249,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityProcedureDto> for QualityProcedu
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to QualityProcedure here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

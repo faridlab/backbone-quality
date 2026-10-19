@@ -35,21 +35,34 @@ pub struct CreateQualityInspectionDto {
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(alias = "item_id")]
     pub item_id: Uuid,
-    #[serde(alias = "inspection_type")]
+    #[serde(default = "default_create_quality_inspection_inspection_type", alias = "inspection_type")]
     pub inspection_type: InspectionType,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "source_type")]
     pub source_type: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "source_id")]
     pub source_id: Option<Uuid>,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
-    #[serde(alias = "sample_size")]
+    #[serde(default = "default_create_quality_inspection_sample_size", alias = "sample_size")]
     pub sample_size: i32,
     #[cfg_attr(feature = "openapi", schema(example = "2024-01-01T00:00:00Z"))]
     #[serde(alias = "inspected_at")]
     pub inspected_at: DateTime<Utc>,
+    #[serde(default = "default_create_quality_inspection_status")]
     pub status: InspectionStatus,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub remarks: Option<String>,
+}
+
+fn default_create_quality_inspection_inspection_type() -> InspectionType {
+    InspectionType::Incoming
+}
+
+fn default_create_quality_inspection_sample_size() -> i32 {
+    1
+}
+
+fn default_create_quality_inspection_status() -> InspectionStatus {
+    InspectionStatus::Pending
 }
 
 // =============================================================================
@@ -98,17 +111,17 @@ pub struct UpdateQualityInspectionDto {
 #[cfg_attr(feature = "openapi", derive(ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct PatchQualityInspectionDto {
-    #[serde(skip_serializing_if = "Option::is_none", alias = "template_id")]
-    pub template_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "template_id")]
+    pub template_id: Option<Option<Uuid>>,
     #[cfg_attr(feature = "openapi", schema(example = "550e8400-e29b-41d4-a716-446655440000"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "item_id")]
     pub item_id: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "inspection_type")]
     pub inspection_type: Option<InspectionType>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "source_type")]
-    pub source_type: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "source_id")]
-    pub source_id: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "source_type")]
+    pub source_type: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "source_id")]
+    pub source_id: Option<Option<Uuid>>,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "sample_size")]
     pub sample_size: Option<i32>,
@@ -117,8 +130,8 @@ pub struct PatchQualityInspectionDto {
     pub inspected_at: Option<DateTime<Utc>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<InspectionStatus>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remarks: Option<String>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option")]
+    pub remarks: Option<Option<String>>,
 }
 
 impl PatchQualityInspectionDto {
@@ -308,12 +321,4 @@ impl backbone_core::ApplyUpdateDto<UpdateQualityInspectionDto> for QualityInspec
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to QualityInspection here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 

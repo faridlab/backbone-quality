@@ -80,6 +80,13 @@ impl axum::response::IntoResponse for QualityProcedureError {
 // Route Configuration
 // =============================================================================
 
+/// The permissions this entity's generic routes require: `quality_procedure:<action>` for `read`, `create`,
+/// `update`, `delete`, `restore` and `purge`, with any rename the schema's `requires:` declares.
+pub fn quality_procedure_permissions() -> backbone_core::http::CrudPermissions {
+    backbone_core::http::CrudPermissions::new("quality_procedure")
+        .in_module("quality")
+}
+
 /// Create Axum router with all 16 Backbone endpoints for QualityProcedure.
 ///
 /// # Routes
@@ -109,21 +116,23 @@ impl axum::response::IntoResponse for QualityProcedureError {
 /// let router = create_quality_procedure_routes(service);
 /// ```
 pub fn create_quality_procedure_routes(service: Arc<QualityProcedureService>) -> Router {
-    BackboneCrudHandler::<QualityProcedureService, QualityProcedure, CreateQualityProcedureDto, UpdateQualityProcedureDto, QualityProcedureResponseDto>::routes(
+    BackboneCrudHandler::<QualityProcedureService, QualityProcedure, CreateQualityProcedureDto, UpdateQualityProcedureDto, QualityProcedureResponseDto>::routes_guarded(
         service,
         "/quality_procedures",
+        quality_procedure_permissions(),
     )
 }
 
 /// Create Axum router with only the read (GET) endpoints for QualityProcedure.
 ///
-/// Safe for public, unauthenticated exposure (e.g., reference data).
+/// Each route requires the entity's `read` permission, so it needs an authenticated caller.
 /// Mutations must be served separately via `create_quality_procedure_write_routes`,
 /// typically wrapped in an auth middleware layer.
 pub fn create_quality_procedure_read_routes(service: Arc<QualityProcedureService>) -> Router {
-    BackboneCrudHandler::<QualityProcedureService, QualityProcedure, CreateQualityProcedureDto, UpdateQualityProcedureDto, QualityProcedureResponseDto>::read_routes(
+    BackboneCrudHandler::<QualityProcedureService, QualityProcedure, CreateQualityProcedureDto, UpdateQualityProcedureDto, QualityProcedureResponseDto>::read_routes_guarded(
         service,
         "/quality_procedures",
+        quality_procedure_permissions(),
     )
 }
 
@@ -139,9 +148,10 @@ pub fn create_quality_procedure_read_routes(service: Arc<QualityProcedureService
 /// service (e.g. a command router over its domain engine), serve THAT instead
 /// for any mutation that must respect domain rules.
 pub fn create_quality_procedure_write_routes(service: Arc<QualityProcedureService>) -> Router {
-    BackboneCrudHandler::<QualityProcedureService, QualityProcedure, CreateQualityProcedureDto, UpdateQualityProcedureDto, QualityProcedureResponseDto>::write_routes(
+    BackboneCrudHandler::<QualityProcedureService, QualityProcedure, CreateQualityProcedureDto, UpdateQualityProcedureDto, QualityProcedureResponseDto>::write_routes_guarded(
         service,
         "/quality_procedures",
+        quality_procedure_permissions(),
     )
 }
 
